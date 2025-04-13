@@ -1,0 +1,160 @@
+{% load i18n math_filters %}
+
+<div class="row">
+    <!-- Summary Cards -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{% trans 'ملخص المخزون' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="border rounded p-3 text-center">
+                            <h6>{% trans 'إجمالي الأصناف' %}</h6>
+                            <h3 class="mb-0">{{ data.total_items }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3 text-center">
+                            <h6>{% trans 'القيمة الإجمالية' %}</h6>
+                            <h3 class="mb-0">{{ data.total_value|floatformat:2 }} {% trans 'جنيه' %}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Status -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{% trans 'حالة المخزون' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="border rounded p-3 text-center">
+                            <h6>{% trans 'أصناف نفذت' %}</h6>
+                            <h3 class="mb-0">{{ data.out_of_stock_items.count }}</h3>
+                            <small class="text-muted">
+                                {{ data.out_of_stock_items.count|div:data.total_items|mul:100|floatformat:1 }}%
+                                {% trans 'من الإجمالي' %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3 text-center">
+                            <h6>{% trans 'أصناف منخفضة' %}</h6>
+                            <h3 class="mb-0">{{ data.low_stock_items.count }}</h3>
+                            <small class="text-muted">
+                                {{ data.low_stock_items.count|div:data.total_items|mul:100|floatformat:1 }}%
+                                {% trans 'من الإجمالي' %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Items -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{% trans 'الأصناف منخفضة المخزون' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{% trans 'الصنف' %}</th>
+                                <th>{% trans 'الكمية المتوفرة' %}</th>
+                                <th>{% trans 'حد إعادة الطلب' %}</th>
+                                <th>{% trans 'القيمة' %}</th>
+                                <th>{% trans 'الحالة' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.low_stock_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.quantity_in_stock }}</td>
+                                <td>{{ item.reorder_point }}</td>
+                                <td>{{ item.quantity_in_stock|mul:item.price|floatformat:2 }} {% trans 'جنيه' %}</td>
+                                <td>
+                                    {% if item.quantity_in_stock == 0 %}
+                                        <span class="badge bg-danger">{% trans 'نفذ' %}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{% trans 'منخفض' %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Value Distribution -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{% trans 'توزيع قيمة المخزون' %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{% trans 'الصنف' %}</th>
+                                <th>{% trans 'الكمية' %}</th>
+                                <th>{% trans 'سعر الوحدة' %}</th>
+                                <th>{% trans 'القيمة الإجمالية' %}</th>
+                                <th>{% trans 'النسبة من الإجمالي' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data.items %}
+                            {% with item_value=item.quantity_in_stock|mul:item.price %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.quantity_in_stock }}</td>
+                                <td>{{ item.price|floatformat:2 }} {% trans 'جنيه' %}</td>
+                                <td>{{ item_value|floatformat:2 }} {% trans 'جنيه' %}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        {% with percentage=item_value|div:data.total_value|mul:100 %}
+                                        <div class="progress-bar {% if percentage >= 20 %}bg-success{% elif percentage >= 10 %}bg-info{% elif percentage >= 5 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ percentage|floatformat:1 }}%"
+                                             aria-valuenow="{{ percentage|floatformat:1 }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ percentage|floatformat:1 }}%
+                                        </div>
+                                        {% endwith %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize any charts or interactive elements here
+    });
+</script>
+{% endblock %}

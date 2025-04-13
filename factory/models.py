@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from accounts.models import User
-from customers.models import Order
+from orders.models import Order
 
 class ProductionLine(models.Model):
     """
@@ -25,8 +25,8 @@ class ProductionOrder(models.Model):
     STATUS_CHOICES = [
         ('pending', _('قيد الانتظار')),
         ('in_progress', _('جاري التصنيع')),
-        ('quality_check', _('فحص الجودة')),
         ('completed', _('مكتمل')),
+        ('stalled', _('متعطل')),
         ('cancelled', _('ملغي')),
     ]
     
@@ -102,41 +102,55 @@ class ProductionStage(models.Model):
     def __str__(self):
         return f"{self.name} - {self.production_order}"
 
-class QualityCheck(models.Model):
+class ProductionIssue(models.Model):
     """
-    Model for quality control checks
+    Model for tracking production issues and stalls
     """
-    RESULT_CHOICES = [
-        ('passed', _('ناجح')),
-        ('failed', _('راسب')),
-        ('needs_rework', _('يحتاج إعادة تصنيع')),
+    SEVERITY_CHOICES = [
+        ('low', _('منخفضة')),
+        ('medium', _('متوسطة')),
+        ('high', _('عالية')),
+        ('critical', _('حرجة')),
     ]
     
     production_order = models.ForeignKey(
         ProductionOrder,
         on_delete=models.CASCADE,
-        related_name='quality_checks',
+        related_name='issues',
         verbose_name=_('أمر الإنتاج')
     )
-    checked_by = models.ForeignKey(
+    title = models.CharField(_('عنوان المشكلة'), max_length=200)
+    description = models.TextField(_('وصف المشكلة'))
+    severity = models.CharField(
+        _('خطورة المشكلة'),
+        max_length=20,
+        choices=SEVERITY_CHOICES,
+        default='medium'
+    )
+    reported_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='quality_checks_performed',
-        verbose_name=_('تم الفحص بواسطة')
+        related_name='reported_issues',
+        verbose_name=_('تم الإبلاغ بواسطة')
     )
-    check_date = models.DateTimeField(_('تاريخ الفحص'), auto_now_add=True)
-    result = models.CharField(
-        _('النتيجة'),
-        max_length=20,
-        choices=RESULT_CHOICES
+    reported_at = models.DateTimeField(_('تاريخ الإبلاغ'), auto_now_add=True)
+    resolved = models.BooleanField(_('تم الحل'), default=False)
+    resolved_at = models.DateTimeField(_('تاريخ الحل'), null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resolved_issues',
+        verbose_name=_('تم الحل بواسطة')
     )
-    notes = models.TextField(_('ملاحظات'), blank=True)
+    resolution_notes = models.TextField(_('ملاحظات الحل'), blank=True)
     
     class Meta:
-        verbose_name = _('فحص جودة')
-        verbose_name_plural = _('فحوصات الجودة')
-        ordering = ['-check_date']
+        verbose_name = _('مشكلة إنتاج')
+        verbose_name_plural = _('مشاكل الإنتاج')
+        ordering = ['-reported_at']
     
     def __str__(self):
-        return f"فحص جودة - {self.production_order} - {self.get_result_display()}"
+        return f"{self.title} - {self.production_order}"

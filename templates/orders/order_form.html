@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - نظام الخواجه{% endblock %}
+
+{% block extra_css %}
+<style>
+    .formset-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .delete-row {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+    }
+    .empty-form {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-shopping-cart"></i> {{ title }}</h2>
+        <a href="{% url 'orders:order_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للقائمة
+        </a>
+    </div>
+
+    <form method="post" id="orderForm">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Order Information -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">معلومات الطلب</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.customer.id_for_label }}" class="form-label">العميل *</label>
+                            {{ form.customer }}
+                            {% if form.customer.errors %}
+                            <div class="text-danger">
+                                {% for error in form.customer.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.order_number.id_for_label }}" class="form-label">رقم الطلب *</label>
+                            {{ form.order_number }}
+                            {% if form.order_number.errors %}
+                            <div class="text-danger">
+                                {% for error in form.order_number.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.delivery_date.id_for_label }}" class="form-label">تاريخ التسليم</label>
+                            {{ form.delivery_date }}
+                            {% if form.delivery_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.delivery_date.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">حالة الطلب *</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="text-danger">
+                                {% for error in form.status.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">ملاحظات</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-0">
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Extended Order Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">معلومات الطلب الإضافية</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ extended_form.order_type.id_for_label }}" class="form-label">نوع الطلب *</label>
+                            {{ extended_form.order_type }}
+                            {% if extended_form.order_type.errors %}
+                            <div class="text-danger">
+                                {% for error in extended_form.order_type.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 goods-field">
+                            <label for="{{ extended_form.goods_type.id_for_label }}" class="form-label">نوع البضاعة</label>
+                            {{ extended_form.goods_type }}
+                            {% if extended_form.goods_type.errors %}
+                            <div class="text-danger">
+                                {% for error in extended_form.goods_type.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 service-field" style="display: none;">
+                            <label for="{{ extended_form.service_type.id_for_label }}" class="form-label">نوع الخدمة</label>
+                            {{ extended_form.service_type }}
+                            {% if extended_form.service_type.errors %}
+                            <div class="text-danger">
+                                {% for error in extended_form.service_type.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ extended_form.invoice_number.id_for_label }}" class="form-label">
+                                    رقم الفاتورة
+                                    <span id="invoice-required" class="text-danger" style="display: none;">*</span>
+                                </label>
+                                {{ extended_form.invoice_number }}
+                                <div id="invoice-help" class="form-text text-danger" style="display: none;">
+                                    مطلوب لطلبات القماش والتركيب والتفصيل
+                                </div>
+                                {% if extended_form.invoice_number.errors %}
+                                <div class="text-danger">
+                                    {% for error in extended_form.invoice_number.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ extended_form.contract_number.id_for_label }}" class="form-label">
+                                    رقم العقد
+                                    <span id="contract-required" class="text-danger" style="display: none;">*</span>
+                                </label>
+                                {{ extended_form.contract_number }}
+                                <div id="contract-help" class="form-text text-danger" style="display: none;">
+                                    مطلوب لطلبات التفصيل
+                                </div>
+                                {% if extended_form.contract_number.errors %}
+                                <div class="text-danger">
+                                    {% for error in extended_form.contract_number.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ extended_form.payment_verified }}
+                                <label class="form-check-label" for="{{ extended_form.payment_verified.id_for_label }}">
+                                    تم التحقق من الدفع
+                                </label>
+                            </div>
+                            {% if extended_form.payment_verified.errors %}
+                            <div class="text-danger">
+                                {% for error in extended_form.payment_verified.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ extended_form.branch.id_for_label }}" class="form-label">الفرع *</label>
+                            {{ extended_form.branch }}
+                            {% if extended_form.branch.errors %}
+                            <div class="text-danger">
+                                {% for error in extended_form.branch.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="card mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">عناصر الطلب</h5>
+                <button type="button" class="btn btn-sm btn-primary" id="add-item">
+                    <i class="fas fa-plus"></i> إضافة عنصر
+                </button>
+            </div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                
+                <div id="items-container">
+                    {% for form in formset.forms %}
+                    <div class="formset-item">
+                        {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                        <button type="button" class="btn btn-sm btn-danger delete-row">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.product.id_for_label }}" class="form-label">المنتج *</label>
+                                {{ form.product }}
+                                {% if form.product.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.product.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">الكمية *</label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.quantity.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">سعر الوحدة *</label>
+                                {{ form.unit_price }}
+                                {% if form.unit_price.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.unit_price.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text product-price-info"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.notes.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div id="empty-form" class="empty-form">
+                    <div class="formset-item">
+                        <button type="button" class="btn btn-sm btn-danger delete-row">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ formset.empty_form.product.id_for_label }}" class="form-label">المنتج *</label>
+                                {{ formset.empty_form.product }}
+                            </div>
+                            
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ formset.empty_form.quantity.id_for_label }}" class="form-label">الكمية *</label>
+                                {{ formset.empty_form.quantity }}
+                            </div>
+                            
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ formset.empty_form.unit_price.id_for_label }}" class="form-label">سعر الوحدة *</label>
+                                {{ formset.empty_form.unit_price }}
+                                <div class="form-text product-price-info"></div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ formset.empty_form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                                {{ formset.empty_form.notes }}
+                            </div>
+                        </div>
+                        
+                        {% for hidden in formset.empty_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> حفظ الطلب
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemsContainer = document.getElementById('items-container');
+        const addItemBtn = document.getElementById('add-item');
+        const emptyForm = document.getElementById('empty-form').firstElementChild;
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const orderTypeSelect = document.getElementById('id_order_type');
+        const serviceFields = document.querySelectorAll('.service-field');
+        const goodsTypeField = document.getElementById('id_goods_type').closest('.mb-3');
+        
+        const goodsTypeSelect = document.getElementById('id_goods_type');
+        const serviceTypeSelect = document.getElementById('id_service_type');
+        const invoiceRequired = document.getElementById('invoice-required');
+        const invoiceHelp = document.getElementById('invoice-help');
+        const contractRequired = document.getElementById('contract-required');
+        const contractHelp = document.getElementById('contract-help');
+        
+        // Toggle service/product fields based on order type
+        function toggleOrderTypeFields() {
+            const orderType = orderTypeSelect.value;
+            
+            if (orderType === 'services') {
+                // Show service fields, hide goods fields
+                serviceFields.forEach(field => field.style.display = 'block');
+                goodsTypeField.style.display = 'none';
+                
+                // Check service type for required fields
+                checkServiceTypeRequirements();
+            } else if (orderType === 'goods') {
+                // Show goods fields, hide service fields
+                serviceFields.forEach(field => field.style.display = 'none');
+                goodsTypeField.style.display = 'block';
+                
+                // Check goods type for required fields
+                checkGoodsTypeRequirements();
+            } else {
+                // Default: show all fields
+                serviceFields.forEach(field => field.style.display = 'block');
+                goodsTypeField.style.display = 'block';
+                
+                // Hide all requirement indicators
+                invoiceRequired.style.display = 'none';
+                invoiceHelp.style.display = 'none';
+                contractRequired.style.display = 'none';
+                contractHelp.style.display = 'none';
+            }
+        }
+        
+        // Check goods type requirements
+        function checkGoodsTypeRequirements() {
+            const goodsType = goodsTypeSelect.value;
+            
+            if (goodsType === 'fabric') {
+                // Invoice number is required for fabric orders
+                invoiceRequired.style.display = 'inline';
+                invoiceHelp.style.display = 'block';
+                contractRequired.style.display = 'none';
+                contractHelp.style.display = 'none';
+            } else {
+                // No requirements for other goods types
+                invoiceRequired.style.display = 'none';
+                invoiceHelp.style.display = 'none';
+                contractRequired.style.display = 'none';
+                contractHelp.style.display = 'none';
+            }
+        }
+        
+        // Check service type requirements
+        function checkServiceTypeRequirements() {
+            const serviceType = serviceTypeSelect.value;
+            
+            if (serviceType === 'tailoring') {
+                // Both invoice and contract numbers are required for tailoring
+                invoiceRequired.style.display = 'inline';
+                invoiceHelp.style.display = 'block';
+                contractRequired.style.display = 'inline';
+                contractHelp.style.display = 'block';
+            } else if (serviceType === 'installation') {
+                // Only invoice number is required for installation
+                invoiceRequired.style.display = 'inline';
+                invoiceHelp.style.display = 'block';
+                contractRequired.style.display = 'none';
+                contractHelp.style.display = 'none';
+            } else {
+                // No requirements for other service types
+                invoiceRequired.style.display = 'none';
+                invoiceHelp.style.display = 'none';
+                contractRequired.style.display = 'none';
+                contractHelp.style.display = 'none';
+            }
+        }
+        
+        // Initialize fields visibility
+        toggleOrderTypeFields();
+        
+        // Add event listeners
+        orderTypeSelect.addEventListener('change', toggleOrderTypeFields);
+        goodsTypeSelect.addEventListener('change', checkGoodsTypeRequirements);
+        serviceTypeSelect.addEventListener('change', checkServiceTypeRequirements);
+        
+        // Function to fetch product price
+        function fetchProductPrice(productSelect) {
+            const productId = productSelect.value;
+            if (!productId) return;
+            
+            const priceField = productSelect.closest('.formset-item').querySelector('input[name$="unit_price"]');
+            const priceInfo = productSelect.closest('.formset-item').querySelector('.product-price-info');
+            
+            // Show loading message
+            priceInfo.textContent = 'جاري تحميل السعر...';
+            
+            // Fetch product price from API
+            fetch(`/inventory/api/products/${productId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.price) {
+                        priceField.value = data.price;
+                        priceInfo.textContent = `السعر المقترح: ${data.price}`;
+                    } else {
+                        priceInfo.textContent = 'لم يتم العثور على سعر';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching product price:', error);
+                    priceInfo.textContent = 'خطأ في تحميل السعر';
+                });
+        }
+        
+        // Add event listeners to product selects
+        function addProductSelectListeners() {
+            const productSelects = document.querySelectorAll('select[name$="product"]');
+            productSelects.forEach(select => {
+                select.addEventListener('change', function() {
+                    fetchProductPrice(this);
+                });
+                
+                // Initialize price if product is already selected
+                if (select.value) {
+                    fetchProductPrice(select);
+                }
+            });
+        }
+        
+        // Initialize product select listeners
+        addProductSelectListeners();
+        
+        // Add new item
+        addItemBtn.addEventListener('click', function() {
+            const newForm = emptyForm.cloneNode(true);
+            const formCount = itemsContainer.children.length;
+            
+            newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, formCount);
+            itemsContainer.appendChild(newForm);
+            
+            // Update total forms
+            totalForms.value = formCount + 1;
+            
+            // Add event listener to delete button
+            addDeleteButtonListener(newForm.querySelector('.delete-row'));
+            
+            // Add event listener to product select
+            const newProductSelect = newForm.querySelector('select[name$="product"]');
+            if (newProductSelect) {
+                newProductSelect.addEventListener('change', function() {
+                    fetchProductPrice(this);
+                });
+            }
+        });
+        
+        // Delete item
+        function addDeleteButtonListener(button) {
+            button.addEventListener('click', function() {
+                const formItem = this.closest('.formset-item');
+                const deleteCheckbox = formItem.querySelector('input[type=checkbox][name$=DELETE]');
+                
+                if (deleteCheckbox) {
+                    // If this is an existing item, mark it for deletion
+                    deleteCheckbox.checked = true;
+                    formItem.style.display = 'none';
+                } else {
+                    // If this is a new item, remove it from the DOM
+                    formItem.remove();
+                    
+                    // Update form indices
+                    updateFormIndices();
+                }
+            });
+        }
+        
+        // Update form indices after deletion
+        function updateFormIndices() {
+            const forms = itemsContainer.querySelectorAll('.formset-item');
+            totalForms.value = forms.length;
+            
+            forms.forEach(function(form, index) {
+                const inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(function(input) {
+                    if (input.name) {
+                        input.name = input.name.replace(/items-\d+/, 'items-' + index);
+                        input.id = input.id.replace(/items-\d+/, 'items-' + index);
+                    }
+                });
+                
+                const labels = form.querySelectorAll('label');
+                labels.forEach(function(label) {
+                    if (label.htmlFor) {
+                        label.htmlFor = label.htmlFor.replace(/items-\d+/, 'items-' + index);
+                    }
+                });
+            });
+        }
+        
+        // Add event listeners to existing delete buttons
+        const deleteButtons = document.querySelectorAll('.delete-row');
+        deleteButtons.forEach(function(button) {
+            addDeleteButtonListener(button);
+        });
+    });
+</script>
+{% endblock %}

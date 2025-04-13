@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل الطلب - نظام الخواجه{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-shopping-cart"></i> تفاصيل الطلب #{{ order.order_number }}</h2>
+        <div>
+            <a href="{% url 'orders:order_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+            <a href="{% url 'orders:order_update' order.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> تعديل الطلب
+            </a>
+            <a href="{% url 'orders:order_delete' order.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> حذف الطلب
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Order Details -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">معلومات الطلب</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 40%">رقم الطلب</th>
+                            <td>{{ order.order_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>العميل</th>
+                            <td>
+                                <a href="{% url 'customers:customer_detail' order.customer.pk %}">
+                                    {{ order.customer.name }}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>تاريخ الطلب</th>
+                            <td>{{ order.order_date|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>تاريخ التسليم</th>
+                            <td>{{ order.delivery_date|date:"Y-m-d"|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <th>حالة الطلب</th>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                <span class="badge bg-warning">قيد الانتظار</span>
+                                {% elif order.status == 'processing' %}
+                                <span class="badge bg-info">قيد التنفيذ</span>
+                                {% elif order.status == 'completed' %}
+                                <span class="badge bg-success">مكتمل</span>
+                                {% elif order.status == 'cancelled' %}
+                                <span class="badge bg-danger">ملغي</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>المبلغ الإجمالي</th>
+                            <td>{{ order.total_amount }} ج.م</td>
+                        </tr>
+                        <tr>
+                            <th>المبلغ المدفوع</th>
+                            <td>{{ order.paid_amount }} ج.م</td>
+                        </tr>
+                        <tr>
+                            <th>المبلغ المتبقي</th>
+                            <td>{{ order.remaining_amount }} ج.م</td>
+                        </tr>
+                        <tr>
+                            <th>تم الإنشاء بواسطة</th>
+                            <td>{{ order.created_by.get_full_name|default:order.created_by.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>تاريخ الإنشاء</th>
+                            <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>تاريخ التحديث</th>
+                            <td>{{ order.updated_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">معلومات العميل</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 40%">الاسم</th>
+                            <td>{{ order.customer.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>رقم الهاتف</th>
+                            <td>{{ order.customer.phone }}</td>
+                        </tr>
+                        <tr>
+                            <th>البريد الإلكتروني</th>
+                            <td>{{ order.customer.email|default:"غير متوفر" }}</td>
+                        </tr>
+                        <tr>
+                            <th>العنوان</th>
+                            <td>{{ order.customer.address|default:"غير متوفر" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">ملاحظات</h5>
+                </div>
+                <div class="card-body">
+                    {% if order.notes %}
+                    <p class="mb-0">{{ order.notes|linebreaks }}</p>
+                    {% else %}
+                    <p class="text-muted mb-0">لا توجد ملاحظات</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Extended Order Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">معلومات الطلب الإضافية</h5>
+                </div>
+                <div class="card-body">
+                    {% if extended_order %}
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 40%">نوع الطلب</th>
+                                <td>{{ extended_order.get_order_type_display }}</td>
+                            </tr>
+                            {% if extended_order.goods_type %}
+                            <tr>
+                                <th>نوع البضاعة</th>
+                                <td>{{ extended_order.get_goods_type_display }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if extended_order.service_type %}
+                            <tr>
+                                <th>نوع الخدمة</th>
+                                <td>{{ extended_order.get_service_type_display }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if extended_order.invoice_number %}
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <td>{{ extended_order.invoice_number }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if extended_order.contract_number %}
+                            <tr>
+                                <th>رقم العقد</th>
+                                <td>{{ extended_order.contract_number }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>تم التحقق من الدفع</th>
+                                <td>
+                                    {% if extended_order.payment_verified %}
+                                        <span class="badge bg-success">نعم</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">لا</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>الفرع</th>
+                                <td>{{ extended_order.branch.name }}</td>
+                            </tr>
+                        </table>
+                        
+                        <div class="mt-3">
+                            <a href="{% url 'orders:accessory_item_create' order.pk %}" class="btn btn-sm btn-info me-2">
+                                <i class="fas fa-cogs"></i> إدارة الاكسسوارات
+                            </a>
+                            <a href="{% url 'orders:fabric_order_create' order.pk %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-cut"></i> طلب القماش
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">لا توجد معلومات إضافية للطلب</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">عناصر الطلب</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المنتج</th>
+                            <th>الكمية</th>
+                            <th>سعر الوحدة</th>
+                            <th>السعر الإجمالي</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit_price }} ج.م</td>
+                            <td>{{ item.total_price }} ج.م</td>
+                            <td>{{ item.notes|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-3">لا توجد عناصر في هذا الطلب</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <th colspan="4" class="text-start">المجموع</th>
+                            <th>{{ order.total_amount }} ج.م</th>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accessory Items -->
+    {% if accessory_items %}
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">عناصر الاكسسوارات</h5>
+            <a href="{% url 'orders:accessory_item_create' order.pk %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المنتج</th>
+                            <th>الكمية</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in accessory_items %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.notes|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Fabric Order -->
+    {% if fabric_order %}
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">طلب القماش</h5>
+            <a href="{% url 'orders:fabric_order_create' order.pk %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> تعديل
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 40%">نوع القماش</th>
+                            <td>{{ fabric_order.get_fabric_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>الكمية</th>
+                            <td>{{ fabric_order.quantity }} متر</td>
+                        </tr>
+                        <tr>
+                            <th>الحالة</th>
+                            <td>
+                                {% if fabric_order.status == 'pending' %}
+                                <span class="badge bg-warning">قيد الانتظار</span>
+                                {% elif fabric_order.status == 'ordered' %}
+                                <span class="badge bg-info">تم الطلب</span>
+                                {% elif fabric_order.status == 'received' %}
+                                <span class="badge bg-success">تم الاستلام</span>
+                                {% elif fabric_order.status == 'cancelled' %}
+                                <span class="badge bg-danger">ملغي</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 40%">تم الإرسال للمخزن</th>
+                            <td>
+                                {% if fabric_order.sent_to_warehouse %}
+                                <span class="badge bg-success">نعم</span>
+                                {% else %}
+                                <span class="badge bg-danger">لا</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>تم القص</th>
+                            <td>
+                                {% if fabric_order.cutting_completed %}
+                                <span class="badge bg-success">نعم</span>
+                                {% else %}
+                                <span class="badge bg-danger">لا</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>ملاحظات</th>
+                            <td>{{ fabric_order.notes|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Payments -->
+    <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">الدفعات</h5>
+            <a href="{% url 'orders:payment_create' order.pk %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> تسجيل دفعة
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المبلغ</th>
+                            <th>طريقة الدفع</th>
+                            <th>تاريخ الدفع</th>
+                            <th>رقم المرجع</th>
+                            <th>ملاحظات</th>
+                            <th>تم الإنشاء بواسطة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ payment.amount }} ج.م</td>
+                            <td>{{ payment.get_payment_method_display }}</td>
+                            <td>{{ payment.payment_date|date:"Y-m-d H:i" }}</td>
+                            <td>{{ payment.reference_number|default:"-" }}</td>
+                            <td>{{ payment.notes|default:"-" }}</td>
+                            <td>{{ payment.created_by.get_full_name|default:payment.created_by.username }}</td>
+                            <td>
+                                <a href="{% url 'orders:payment_delete' payment.pk %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-3">لا توجد دفعات مسجلة لهذا الطلب</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <th colspan="7" class="text-start">المجموع المدفوع</th>
+                            <th>{{ order.paid_amount }} ج.م</th>
+                        </tr>
+                        <tr class="table-light">
+                            <th colspan="7" class="text-start">المبلغ المتبقي</th>
+                            <th>{{ order.remaining_amount }} ج.م</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

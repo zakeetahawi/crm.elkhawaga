@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans 'لوحة تحكم المعاينات' %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>{% trans 'لوحة تحكم المعاينات' %}</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'inspections:inspection_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> {% trans 'معاينة جديدة' %}
+            </a>
+            <a href="{% url 'inspections:report_create' %}" class="btn btn-secondary">
+                <i class="fas fa-file-alt"></i> {% trans 'إنشاء تقرير' %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans 'إجمالي المعاينات' %}</h5>
+                    <h3 class="mb-0">{{ total_inspections }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans 'قيد الانتظار' %}</h5>
+                    <h3 class="mb-0">{{ pending_inspections }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans 'مكتملة' %}</h5>
+                    <h3 class="mb-0">{{ completed_inspections }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans 'نسبة النجاح' %}</h5>
+                    <h3 class="mb-0">{{ success_rate }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans 'إحصائيات الشهر الحالي' %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>{% trans 'إجمالي المعاينات' %}</h6>
+                                <h4>{{ monthly_stats.total }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>{% trans 'المعاينات المكتملة' %}</h6>
+                                <h4>{{ monthly_stats.completed }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>{% trans 'نسبة النجاح' %}</h6>
+                                <h4>{{ monthly_stats.success_rate }}%</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Inspections -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{% trans 'آخر المعاينات' %}</h5>
+                    <a href="{% url 'inspections:inspection_list' %}" class="btn btn-sm btn-outline-primary">
+                        {% trans 'عرض الكل' %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_inspections %}
+                    <div class="list-group">
+                        {% for inspection in recent_inspections %}
+                        <a href="{% url 'inspections:inspection_detail' inspection.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ inspection.contract_number }}</h6>
+                                <small>{{ inspection.created_at|date:"Y/m/d" }}</small>
+                            </div>
+                            <p class="mb-1">{{ inspection.customer|default:"عميل جديد" }}</p>
+                            <small class="text-muted">
+                                <span class="badge {% if inspection.status == 'pending' %}bg-warning
+                                           {% elif inspection.status == 'completed' %}bg-success
+                                           {% else %}bg-danger{% endif %}">
+                                    {{ inspection.get_status_display }}
+                                </span>
+                            </small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">{% trans 'لا توجد معاينات حديثة.' %}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Inspections -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans 'المعاينات القادمة' %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_inspections %}
+                    <div class="list-group">
+                        {% for inspection in upcoming_inspections %}
+                        <a href="{% url 'inspections:inspection_detail' inspection.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ inspection.contract_number }}</h6>
+                                <small class="text-primary">{{ inspection.scheduled_date|date:"Y/m/d" }}</small>
+                            </div>
+                            <p class="mb-1">{{ inspection.customer|default:"عميل جديد" }}</p>
+                            <small class="text-muted">{{ inspection.branch.name }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">{% trans 'لا توجد معاينات قادمة.' %}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Enable any Bootstrap tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "لوحة تحكم التركيبات" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{% trans "لوحة تحكم التركيبات" %}</h1>
+        <div>
+            <a href="{% url 'installations:installation_create' %}" class="btn btn-primary me-2">
+                <i class="fas fa-plus"></i> {% trans "إضافة تركيب جديد" %}
+            </a>
+            <a href="{% url 'installations:transport_create' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> {% trans "إضافة طلب نقل" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "إجمالي التركيبات" %}</h6>
+                            <h2 class="mb-0">{{ total_installations }}</h2>
+                        </div>
+                        <i class="fas fa-tools fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:installation_list' %}" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "قيد الانتظار" %}</h6>
+                            <h2 class="mb-0">{{ pending_installations }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:installation_list' %}?status=pending" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "تم الجدولة" %}</h6>
+                            <h2 class="mb-0">{{ scheduled_installations }}</h2>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:installation_list' %}?status=scheduled" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "مكتملة" %}</h6>
+                            <h2 class="mb-0">{{ completed_installations }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:installation_list' %}?status=completed" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "إجمالي طلبات النقل" %}</h6>
+                            <h2 class="mb-0">{{ total_transports }}</h2>
+                        </div>
+                        <i class="fas fa-truck fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:transport_list' %}" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "قيد الانتظار" %}</h6>
+                            <h2 class="mb-0">{{ pending_transports }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:transport_list' %}?status=pending" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "تم الجدولة" %}</h6>
+                            <h2 class="mb-0">{{ scheduled_transports }}</h2>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:transport_list' %}?status=scheduled" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">{% trans "مكتملة" %}</h6>
+                            <h2 class="mb-0">{{ completed_transports }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <a href="{% url 'installations:transport_list' %}?status=completed" class="text-white">{% trans "عرض الكل" %}</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Installations -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{% trans "أحدث التركيبات" %}</h5>
+                    <a href="{% url 'installations:installation_list' %}" class="btn btn-sm btn-light">
+                        {% trans "عرض الكل" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_installations %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "رقم" %}</th>
+                                        <th>{% trans "العميل" %}</th>
+                                        <th>{% trans "الحالة" %}</th>
+                                        <th>{% trans "موعد التركيب" %}</th>
+                                        <th>{% trans "إجراءات" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for installation in recent_installations %}
+                                        <tr>
+                                            <td>{{ installation.id }}</td>
+                                            <td>{{ installation.customer.name }}</td>
+                                            <td>
+                                                {% if installation.status == 'pending' %}
+                                                    <span class="badge bg-warning">{{ installation.get_status_display }}</span>
+                                                {% elif installation.status == 'scheduled' %}
+                                                    <span class="badge bg-info">{{ installation.get_status_display }}</span>
+                                                {% elif installation.status == 'in_progress' %}
+                                                    <span class="badge bg-primary">{{ installation.get_status_display }}</span>
+                                                {% elif installation.status == 'completed' %}
+                                                    <span class="badge bg-success">{{ installation.get_status_display }}</span>
+                                                {% elif installation.status == 'cancelled' %}
+                                                    <span class="badge bg-danger">{{ installation.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if installation.scheduled_date %}
+                                                    {{ installation.scheduled_date|date:"Y-m-d H:i" }}
+                                                {% else %}
+                                                    <span class="text-muted">{% trans "غير محدد" %}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'installations:installation_detail' installation.id %}" 
+                                                   class="btn btn-sm btn-info" title="{% trans 'عرض التفاصيل' %}">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> {% trans "لا توجد تركيبات حديثة." %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transports -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{% trans "أحدث طلبات النقل" %}</h5>
+                    <a href="{% url 'installations:transport_list' %}" class="btn btn-sm btn-light">
+                        {% trans "عرض الكل" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transports %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "رقم" %}</th>
+                                        <th>{% trans "من موقع" %}</th>
+                                        <th>{% trans "إلى موقع" %}</th>
+                                        <th>{% trans "الحالة" %}</th>
+                                        <th>{% trans "إجراءات" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transport in recent_transports %}
+                                        <tr>
+                                            <td>{{ transport.id }}</td>
+                                            <td>{{ transport.from_location|truncatechars:20 }}</td>
+                                            <td>{{ transport.to_location|truncatechars:20 }}</td>
+                                            <td>
+                                                {% if transport.status == 'pending' %}
+                                                    <span class="badge bg-warning">{{ transport.get_status_display }}</span>
+                                                {% elif transport.status == 'scheduled' %}
+                                                    <span class="badge bg-info">{{ transport.get_status_display }}</span>
+                                                {% elif transport.status == 'in_progress' %}
+                                                    <span class="badge bg-primary">{{ transport.get_status_display }}</span>
+                                                {% elif transport.status == 'completed' %}
+                                                    <span class="badge bg-success">{{ transport.get_status_display }}</span>
+                                                {% elif transport.status == 'cancelled' %}
+                                                    <span class="badge bg-danger">{{ transport.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'installations:transport_detail' transport.id %}" 
+                                                   class="btn btn-sm btn-info" title="{% trans 'عرض التفاصيل' %}">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> {% trans "لا توجد طلبات نقل حديثة." %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
