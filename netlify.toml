@@ -1,7 +1,6 @@
 [build]
   command = """
-    python -m pip install --upgrade pip &&
-    pip install -r requirements.txt &&
+    python -m pip install -r requirements-dev.txt &&
     python manage.py collectstatic --noinput
   """
   publish = "staticfiles"
@@ -9,11 +8,21 @@
 [build.environment]
   PYTHON_VERSION = "3.11.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
+  PIP_NO_BINARY = "psycopg2-binary"
 
 [context.production.environment]
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"
@@ -28,3 +37,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"

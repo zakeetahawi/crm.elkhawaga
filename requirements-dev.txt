@@ -1,0 +1,16 @@
+-r requirements.txt
+
+# Development dependencies
+pytest>=7.0.0
+pytest-django>=4.5.0
+black>=22.0.0
+flake8>=4.0.0
+django-debug-toolbar>=3.8.0
+coverage>=6.0.0
+
+# Runtime dependencies needed for Netlify
+pyOpenSSL>=23.0.0
+cryptography>=41.0.0
+pip>=23.0.0
+setuptools>=65.5.1
+wheel>=0.40.0
