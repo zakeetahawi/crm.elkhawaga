@@ -10,16 +10,43 @@ class Order(models.Model):
         ('completed', 'مكتمل'),
         ('cancelled', 'ملغي'),
     ]
+    
+    ORDER_TYPE_CHOICES = [
+        ('goods', 'سلع'),
+        ('services', 'خدمات'),
+    ]
+    
+    GOODS_TYPE_CHOICES = [
+        ('accessories', 'اكسسوار'),
+        ('fabric', 'قماش'),
+    ]
+    
+    SERVICE_TYPE_CHOICES = [
+        ('inspection', 'معاينة'),
+        ('tailoring', 'تفصيل'),
+        ('installation', 'تركيب'),
+        ('transport', 'نقل'),
+    ]
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer_orders', verbose_name='العميل')
     order_number = models.CharField(max_length=50, unique=True, verbose_name='رقم الطلب')
     order_date = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الطلب')
     delivery_date = models.DateField(null=True, blank=True, verbose_name='تاريخ التسليم')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='حالة الطلب')
+    
+    # New fields for order types
+    order_type = models.CharField(max_length=10, choices=ORDER_TYPE_CHOICES, verbose_name='نوع الطلب')
+    goods_type = models.CharField(max_length=15, choices=GOODS_TYPE_CHOICES, null=True, blank=True, verbose_name='نوع السلعة')
+    service_type = models.CharField(max_length=15, choices=SERVICE_TYPE_CHOICES, null=True, blank=True, verbose_name='نوع الخدمة')
+    invoice_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='رقم الفاتورة')
+    contract_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='رقم العقد')
+    payment_verified = models.BooleanField(default=False, verbose_name='تم التحقق من السداد')
+    
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ الإجمالي')
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ المدفوع')
     notes = models.TextField(blank=True, verbose_name='ملاحظات')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name='تم الإنشاء بواسطة')
+    branch = models.ForeignKey('accounts.Branch', on_delete=models.CASCADE, related_name='branch_orders', verbose_name='الفرع', null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 

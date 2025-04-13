@@ -5,6 +5,7 @@ Django settings for crm project.
 from pathlib import Path
 import os
 import environ
+import dj_database_url
 
 env = environ.Env()
 environ.Env.read_env()
@@ -88,8 +89,9 @@ WSGI_APPLICATION = 'crm.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': env.db(
-        default='postgres://postgres:postgres@localhost:5432/mydb'
+    'default': dj_database_url.config(
+        default=env('DATABASE_URL', default='postgres://postgres:postgres@localhost:5432/mydb'),
+        conn_max_age=600
     )
 }
 
@@ -164,10 +166,11 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ['https://*.netlify.app']
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = env('REDIS_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
