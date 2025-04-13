@@ -1,14 +1,11 @@
 [build]
-  command = """
-    python -m pip install -r requirements-dev.txt &&
-    python manage.py collectstatic --noinput
-  """
+  command = "chmod +x build.sh && ./build.sh"
   publish = "staticfiles"
 
 [build.environment]
   PYTHON_VERSION = "3.11.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
-  PIP_NO_BINARY = "psycopg2-binary"
+  NODE_VERSION = "18"
 
 [context.production.environment]
   DJANGO_SETTINGS_MODULE = "crm.settings"
@@ -18,6 +15,13 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+[dev]
+  framework = "#custom"
+  command = "python manage.py runserver"
+  port = 8000
+  targetPort = 8000
+  publish = "staticfiles"
 
 [[redirects]]
   from = "/api/*"
@@ -38,3 +42,4 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
