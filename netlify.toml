@@ -1,9 +1,14 @@
 [build]
-  command = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+  base = ""
   publish = "staticfiles"
+  command = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
 
 [build.environment]
-  PYTHON_VERSION = "3.9.0"
+  PYTHON_VERSION = "3.8.12"
+  DJANGO_SETTINGS_MODULE = "crm.settings"
+
+[[plugins]]
+  package = "@netlify/plugin-django"
 
 [[redirects]]
   from = "/*"
@@ -16,4 +21,4 @@
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
-    Content-Security-Policy = "frame-ancestors 'none'"
+    Referrer-Policy = "strict-origin-when-cross-origin"
