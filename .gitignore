@@ -41,3 +41,6 @@ staticfiles/
 
 # Local development
 local_settings.py
+
+# Local Netlify folder
+.netlify
