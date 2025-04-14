@@ -21,9 +21,9 @@ var/
 
 # Django
 *.log
-*.pot
-*.pyc
+local_settings.py
 db.sqlite3
+db.sqlite3-journal
 media/
 staticfiles/
 
@@ -36,11 +36,26 @@ staticfiles/
 .vscode/
 *.swp
 *.swo
-*.swn
-.DS_Store
+*~
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Netlify
+.netlify/
+.netlify.app
+.netlify.toml
 
 # Local development
-local_settings.py
+*.sqlite3
+*.db
+*.pid
+celerybeat-schedule
+celerybeat.pid
 
-# Local Netlify folder
-.netlify
+# System
+.DS_Store
+Thumbs.db

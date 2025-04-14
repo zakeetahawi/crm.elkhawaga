@@ -133,69 +133,56 @@
                 </div>
             </div>
             
-            <!-- Extended Order Information -->
+            <!-- Order Type Information -->
             <div class="card mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">معلومات الطلب الإضافية</h5>
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">معلومات نوع الطلب</h5>
                 </div>
                 <div class="card-body">
-                    {% if extended_order %}
-                        <table class="table table-bordered">
-                            <tr>
-                                <th style="width: 40%">نوع الطلب</th>
-                                <td>{{ extended_order.get_order_type_display }}</td>
-                            </tr>
-                            {% if extended_order.goods_type %}
-                            <tr>
-                                <th>نوع البضاعة</th>
-                                <td>{{ extended_order.get_goods_type_display }}</td>
-                            </tr>
-                            {% endif %}
-                            {% if extended_order.service_type %}
-                            <tr>
-                                <th>نوع الخدمة</th>
-                                <td>{{ extended_order.get_service_type_display }}</td>
-                            </tr>
-                            {% endif %}
-                            {% if extended_order.invoice_number %}
-                            <tr>
-                                <th>رقم الفاتورة</th>
-                                <td>{{ extended_order.invoice_number }}</td>
-                            </tr>
-                            {% endif %}
-                            {% if extended_order.contract_number %}
-                            <tr>
-                                <th>رقم العقد</th>
-                                <td>{{ extended_order.contract_number }}</td>
-                            </tr>
-                            {% endif %}
-                            <tr>
-                                <th>تم التحقق من الدفع</th>
-                                <td>
-                                    {% if extended_order.payment_verified %}
-                                        <span class="badge bg-success">نعم</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">لا</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>الفرع</th>
-                                <td>{{ extended_order.branch.name }}</td>
-                            </tr>
-                        </table>
-                        
-                        <div class="mt-3">
-                            <a href="{% url 'orders:accessory_item_create' order.pk %}" class="btn btn-sm btn-info me-2">
-                                <i class="fas fa-cogs"></i> إدارة الاكسسوارات
-                            </a>
-                            <a href="{% url 'orders:fabric_order_create' order.pk %}" class="btn btn-sm btn-info">
-                                <i class="fas fa-cut"></i> طلب القماش
-                            </a>
-                        </div>
-                    {% else %}
-                        <p class="text-muted mb-0">لا توجد معلومات إضافية للطلب</p>
-                    {% endif %}
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 40%">نوع الطلب</th>
+                            <td>{{ order.get_order_type_display }}</td>
+                        </tr>
+                        {% if order.goods_type %}
+                        <tr>
+                            <th>نوع البضاعة</th>
+                            <td>{{ order.get_goods_type_display }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if order.service_type %}
+                        <tr>
+                            <th>نوع الخدمة</th>
+                            <td>{{ order.get_service_type_display }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if order.invoice_number %}
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <td>{{ order.invoice_number }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if order.contract_number %}
+                        <tr>
+                            <th>رقم العقد</th>
+                            <td>{{ order.contract_number }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>تم التحقق من الدفع</th>
+                            <td>
+                                {% if order.payment_verified %}
+                                    <span class="badge bg-success">نعم</span>
+                                {% else %}
+                                    <span class="badge bg-danger">لا</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>الفرع</th>
+                            <td>{{ order.branch.name }}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         </div>
@@ -220,7 +207,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in order.items.all %}
+                        {% for item in order_items %}
                         <tr>
                             <td>{{ forloop.counter }}</td>
                             <td>{{ item.product.name }}</td>
@@ -246,112 +233,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Accessory Items -->
-    {% if accessory_items %}
-    <div class="card mb-4">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">عناصر الاكسسوارات</h5>
-            <a href="{% url 'orders:accessory_item_create' order.pk %}" class="btn btn-sm btn-primary">
-                <i class="fas fa-edit"></i> تعديل
-            </a>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>المنتج</th>
-                            <th>الكمية</th>
-                            <th>ملاحظات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in accessory_items %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ item.product.name }}</td>
-                            <td>{{ item.quantity }}</td>
-                            <td>{{ item.notes|default:"-" }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Fabric Order -->
-    {% if fabric_order %}
-    <div class="card mb-4">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">طلب القماش</h5>
-            <a href="{% url 'orders:fabric_order_create' order.pk %}" class="btn btn-sm btn-primary">
-                <i class="fas fa-edit"></i> تعديل
-            </a>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <table class="table table-bordered">
-                        <tr>
-                            <th style="width: 40%">نوع القماش</th>
-                            <td>{{ fabric_order.get_fabric_type_display }}</td>
-                        </tr>
-                        <tr>
-                            <th>الكمية</th>
-                            <td>{{ fabric_order.quantity }} متر</td>
-                        </tr>
-                        <tr>
-                            <th>الحالة</th>
-                            <td>
-                                {% if fabric_order.status == 'pending' %}
-                                <span class="badge bg-warning">قيد الانتظار</span>
-                                {% elif fabric_order.status == 'ordered' %}
-                                <span class="badge bg-info">تم الطلب</span>
-                                {% elif fabric_order.status == 'received' %}
-                                <span class="badge bg-success">تم الاستلام</span>
-                                {% elif fabric_order.status == 'cancelled' %}
-                                <span class="badge bg-danger">ملغي</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <table class="table table-bordered">
-                        <tr>
-                            <th style="width: 40%">تم الإرسال للمخزن</th>
-                            <td>
-                                {% if fabric_order.sent_to_warehouse %}
-                                <span class="badge bg-success">نعم</span>
-                                {% else %}
-                                <span class="badge bg-danger">لا</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>تم القص</th>
-                            <td>
-                                {% if fabric_order.cutting_completed %}
-                                <span class="badge bg-success">نعم</span>
-                                {% else %}
-                                <span class="badge bg-danger">لا</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>ملاحظات</th>
-                            <td>{{ fabric_order.notes|default:"-" }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
     
     <!-- Payments -->
     <div class="card">
