@@ -129,13 +129,13 @@
                                 <td>
                                     <div class="progress" style="height: 20px;">
                                         {% with percentage=item_value|div:data.total_value|mul:100 %}
-                                        <div class="progress-bar {% if percentage >= 20 %}bg-success{% elif percentage >= 10 %}bg-info{% elif percentage >= 5 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                             role="progressbar" 
-                                             style="width: {{ percentage|floatformat:1 }}%"
-                                             aria-valuenow="{{ percentage|floatformat:1 }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
-                                            {{ percentage|floatformat:1 }}%
+                                        <div class="progress-bar {% if percentage >= 20 %}bg-success{% elif percentage >= 10 %}bg-info{% elif percentage >= 5 %}bg-warning{% else %}bg-danger{% endif %}"
+                                              role="progressbar"
+                                              data-width="{{ percentage|floatformat:1 }}"
+                                              aria-valuenow="{{ percentage|floatformat:1 }}"
+                                              aria-valuemin="0"
+                                              aria-valuemax="100">
+                                             {{ percentage|floatformat:1 }}%
                                         </div>
                                         {% endwith %}
                                     </div>
@@ -154,7 +154,11 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        // Initialize any charts or interactive elements here
+        // Set width for all progress bars
+        $('.progress-bar').each(function() {
+            const width = $(this).data('width');
+            $(this).css('width', width + '%');
+        });
     });
 </script>
 {% endblock %}

@@ -1,7 +1,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from .models import Order, OrderItem, Payment
-from .extended_models import ExtendedOrder, AccessoryItem, FabricOrder
+# These models are already defined in models.py
+from .models import Order, OrderItem, Payment
 
 class OrderForm(forms.ModelForm):
     class Meta:
@@ -46,11 +47,20 @@ OrderItemFormSet = forms.inlineformset_factory(
     can_delete=True,
 )
 
-class ExtendedOrderForm(forms.ModelForm):
+# ExtendedOrderForm is merged into the main OrderForm since the fields are now in Order model
+class OrderForm(forms.ModelForm):
     class Meta:
-        model = ExtendedOrder
-        fields = ['order_type', 'goods_type', 'service_type', 'invoice_number', 'contract_number', 'payment_verified', 'branch']
+        model = Order
+        fields = [
+            'customer', 'order_number', 'delivery_date', 'status',
+            'order_type', 'goods_type', 'service_type', 'invoice_number',
+            'contract_number', 'payment_verified', 'branch', 'notes'
+        ]
         widgets = {
+            'customer': forms.Select(attrs={'class': 'form-select'}),
+            'order_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'delivery_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
             'order_type': forms.Select(attrs={'class': 'form-select'}),
             'goods_type': forms.Select(attrs={'class': 'form-select'}),
             'service_type': forms.Select(attrs={'class': 'form-select'}),
@@ -58,43 +68,12 @@ class ExtendedOrderForm(forms.ModelForm):
             'contract_number': forms.TextInput(attrs={'class': 'form-control'}),
             'payment_verified': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'branch': forms.Select(attrs={'class': 'form-select'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['goods_type'].required = False
         self.fields['service_type'].required = False
         self.fields['invoice_number'].required = False
         self.fields['contract_number'].required = False
-
-class AccessoryItemForm(forms.ModelForm):
-    class Meta:
-        model = AccessoryItem
-        fields = ['product', 'quantity', 'notes']
-        widgets = {
-            'product': forms.Select(attrs={'class': 'form-select'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-        }
-
-# Formset for managing multiple accessory items
-AccessoryItemFormSet = forms.inlineformset_factory(
-    ExtendedOrder,
-    AccessoryItem,
-    form=AccessoryItemForm,
-    extra=1,
-    can_delete=True,
-)
-
-class FabricOrderForm(forms.ModelForm):
-    class Meta:
-        model = FabricOrder
-        fields = ['fabric_type', 'quantity', 'status', 'sent_to_warehouse', 'cutting_completed', 'notes']
-        widgets = {
-            'fabric_type': forms.Select(attrs={'class': 'form-select'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'sent_to_warehouse': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'cutting_completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-        }

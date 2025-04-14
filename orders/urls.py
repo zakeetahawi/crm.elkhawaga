@@ -14,10 +14,4 @@ urlpatterns = [
     # Payment URLs
     path('<int:order_pk>/payment/create/', views.payment_create, name='payment_create'),
     path('payment/<int:pk>/delete/', views.payment_delete, name='payment_delete'),
-    
-    # Accessory Items URLs
-    path('<int:order_pk>/accessories/', views.accessory_item_create, name='accessory_item_create'),
-    
-    # Fabric Order URLs
-    path('<int:order_pk>/fabric/', views.fabric_order_create, name='fabric_order_create'),
 ]

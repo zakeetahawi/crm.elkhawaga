@@ -1,0 +1,37 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.env
+
+# Development
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+media/
+staticfiles/
+node_modules/
+dist/
+*.sqlite3
+
+# Documentation
+*.md
+docs/
+README*
+
+# Docker
+Dockerfile
+docker-compose.yml
+.docker/
