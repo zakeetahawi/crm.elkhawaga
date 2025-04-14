@@ -1,17 +1,23 @@
 [build]
-  command = "pip install -r requirements.txt && pip install -r requirements-dev.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
+  base = "/"
+  command = "chmod +x build.sh && ./build.sh"
   publish = "staticfiles"
 
 [build.environment]
-  PYTHON_VERSION = "3.11"
+  PYTHON_VERSION = "3.11.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   NODE_VERSION = "18"
-  PIP_NO_BINARY = "0"
 
 [context.production.environment]
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
+
+[context.deploy-preview]
+  command = """
+    python -m pip install -r requirements.txt &&
+    python manage.py collectstatic --noinput
+  """
 
 [functions]
   directory = "netlify/functions"
