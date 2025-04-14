@@ -3,9 +3,11 @@
   publish = "staticfiles"
 
 [build.environment]
-  PYTHON_VERSION = "3.11.0"
+  PYTHON_VERSION = "3.11"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   NODE_VERSION = "18"
+  # Add pip cache directory to speed up builds
+  PIP_CACHE_DIR = ".pip_cache"
 
 [context.production.environment]
   DJANGO_SETTINGS_MODULE = "crm.settings"
