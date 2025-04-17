@@ -1,9 +1,10 @@
 # Python
-*.py[cod]
+*.pyc
 __pycache__/
+*.py[cod]
+*$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -15,6 +16,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -25,37 +27,26 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
-staticfiles/
 
-# Environment variables
+# Coverage
+.coverage
+htmlcov/
+
+# Development
 .env
-.env.*
-
-# IDE
-.idea/
-.vscode/
+.env.local
+.python-version
 *.swp
-*.swo
-*~
-
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Netlify
-.netlify/
-.netlify.app
-.netlify.toml
-
-# Local development
-*.sqlite3
-*.db
-*.pid
-celerybeat-schedule
-celerybeat.pid
-
-# System
 .DS_Store
-Thumbs.db
+
+# Project specific
+data_files/
+create_*.py
+fix_*.py
+requirements-temp.txt
+**/management/commands/create_test_*.py
+**/management/commands/add_test_*.py
+
+# Static files
+staticfiles/
+static/admin/custom_admin.css
