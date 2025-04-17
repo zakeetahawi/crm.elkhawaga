@@ -18,24 +18,42 @@ def generate_multi_sheet_template(model_names):
         BytesIO object containing the Excel file
     """
     import io
+    from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
     
     # Create a BytesIO object to store the Excel file
     output = io.BytesIO()
     
     # Create a Pandas Excel writer using the BytesIO object
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        # For each model, create a sheet with sample data
+        # Add an instructions sheet
+        instructions_df = pd.DataFrame({
+            'تعليمات الاستخدام': [
+                'هذا الملف يحتوي على قوالب لاستيراد البيانات إلى نظام CRM الخواجة',
+                'كل صفحة تمثل نوعًا مختلفًا من البيانات (المنتجات، العملاء، الطلبات، إلخ)',
+                'قم بملء البيانات في كل صفحة وفقًا للأعمدة المحددة',
+                'الحقول المميزة باللون الأحمر إلزامية ويجب ملؤها',
+                'يمكنك استيراد الملف بالكامل من خلال اختيار "ملف متعدد الصفحات" في صفحة الاستيراد',
+                'تأكد من عدم تغيير أسماء الصفحات أو الأعمدة لضمان نجاح الاستيراد'
+            ]
+        })
+        instructions_df.to_excel(writer, sheet_name='_تعليمات', index=False)
+        
+        # Add a sheet for each model
         for model_name in model_names:
             app_label, model = model_name.split('.')
             
             # Get the model class
             model_class = apps.get_model(app_label, model)
             
-            # Get the field names
+            # Get the field names and required status
             fields = []
+            required_fields = []
+            field_verbose_names = {}
+            
             for field in model_class._meta.fields:
                 # Skip auto-generated fields
-                if field.name in ['id', 'created_at', 'updated_at']:
+                if field.name in ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']:
                     continue
                 
                 # Skip file fields
@@ -43,19 +61,84 @@ def generate_multi_sheet_template(model_names):
                     continue
                 
                 fields.append(field.name)
+                field_verbose_names[field.name] = field.verbose_name
+                
+                # Check if field is required
+                if not field.blank and not field.null and not field.has_default():
+                    required_fields.append(field.name)
             
-            # Create a sample dataframe
+            # Create a sample dataframe with example data
             sample_data = {}
-            for field in fields:
-                sample_data[field] = ['']
+            example_row = {}
             
+            # Add example data based on model type
+            if model == 'product':
+                example_row = {
+                    'name': 'منتج نموذجي',
+                    'sku': 'SKU12345',
+                    'description': 'وصف المنتج النموذجي',
+                    'price': 100.00,
+                    'cost': 70.00,
+                    'stock': 50,
+                }
+            elif model == 'customer':
+                example_row = {
+                    'name': 'عميل نموذجي',
+                    'phone': '01234567890',
+                    'email': 'customer@example.com',
+                    'address': 'عنوان العميل النموذجي',
+                }
+            elif model == 'supplier':
+                example_row = {
+                    'name': 'مورد نموذجي',
+                    'phone': '01234567890',
+                    'email': 'supplier@example.com',
+                    'address': 'عنوان المورد النموذجي',
+                }
+            elif model == 'order':
+                example_row = {
+                    'order_number': 'ORD12345',
+                    'customer_id': 1,
+                    'total': 500.00,
+                    'status': 'pending',
+                }
+            
+            # Create the dataframe with field names as columns
+            for field in fields:
+                # Use example data if available, otherwise empty string
+                if field in example_row:
+                    sample_data[field] = [example_row[field], '']
+                else:
+                    sample_data[field] = ['', '']
+                    
+            # Create DataFrame with verbose field names
+            verbose_columns = [field_verbose_names.get(field, field) for field in fields]
             df = pd.DataFrame(sample_data)
             
+            # Get the Arabic name for the sheet
+            sheet_name = model
+            if model == 'product':
+                sheet_name = 'المنتجات'
+            elif model == 'customer':
+                sheet_name = 'العملاء'
+            elif model == 'supplier':
+                sheet_name = 'الموردين'
+            elif model == 'order':
+                sheet_name = 'الطلبات'
+            elif model == 'category':
+                sheet_name = 'فئات المنتجات'
+            elif model == 'customercategory':
+                sheet_name = 'فئات العملاء'
+            elif model == 'orderitem':
+                sheet_name = 'عناصر الطلبات'
+            elif model == 'payment':
+                sheet_name = 'المدفوعات'
+            
             # Write the dataframe to the Excel file
-            df.to_excel(writer, sheet_name=model, index=False)
+            df.to_excel(writer, sheet_name=sheet_name, index=False, header=fields)
             
             # Get the worksheet
-            worksheet = writer.sheets[model]
+            worksheet = writer.sheets[sheet_name]
             
             # Add instructions as a header row
             instructions = f"قم بملء البيانات أدناه لاستيراد {model_class._meta.verbose_name_plural}"
@@ -92,10 +175,56 @@ def process_multi_sheet_import(file_path, import_log):
     # Read the Excel file
     xls = pd.ExcelFile(file_path)
     
+    # Define mapping of sheet names to models
+    # This mapping can be customized based on your specific needs
+    sheet_to_model_mapping = {
+        'Products': 'inventory.product',
+        'المنتجات': 'inventory.product',
+        'Suppliers': 'inventory.supplier',
+        'الموردين': 'inventory.supplier',
+        'Customers': 'customers.customer',
+        'العملاء': 'customers.customer',
+        'Orders': 'orders.order',
+        'الطلبات': 'orders.order',
+        'Categories': 'inventory.category',
+        'فئات المنتجات': 'inventory.category',
+        'CustomerCategories': 'customers.customercategory',
+        'فئات العملاء': 'customers.customercategory',
+        'OrderItems': 'orders.orderitem',
+        'عناصر الطلبات': 'orders.orderitem',
+        'Payments': 'orders.payment',
+        'المدفوعات': 'orders.payment',
+    }
+    
     # Process each sheet
     for sheet_name in xls.sheet_names:
-        # Get the model name
-        model_name = f"{import_log.model_name.split('.')[0]}.{sheet_name}"
+        # Skip sheets that start with '_' (considered as metadata or helper sheets)
+        if sheet_name.startswith('_'):
+            continue
+            
+        # Get the model name from the mapping or try to infer it
+        if sheet_name in sheet_to_model_mapping:
+            model_name = sheet_to_model_mapping[sheet_name]
+        else:
+            # Try to infer the model name from the sheet name
+            # Convert CamelCase to snake_case if needed
+            model_guess = sheet_name.lower()
+            # Check if it's a valid model in any of the importable apps
+            importable_apps = ['inventory', 'customers', 'orders']
+            model_found = False
+            
+            for app in importable_apps:
+                try:
+                    model_class = apps.get_model(app, model_guess)
+                    model_name = f"{app}.{model_guess}"
+                    model_found = True
+                    break
+                except LookupError:
+                    continue
+            
+            if not model_found:
+                error_details.append(f"Sheet: {sheet_name}: Could not determine model. Skipping this sheet.")
+                continue
         
         try:
             # Get the model class
@@ -206,14 +335,47 @@ def generate_multi_sheet_export(model_names):
                         else:
                             field_value = None
                     
+                    # Handle datetime fields with timezone info
+                    if field.get_internal_type() in ['DateTimeField', 'DateField']:
+                        if field_value is not None:
+                            # Convert to timezone naive datetime
+                            if hasattr(field_value, 'tzinfo') and field_value.tzinfo is not None:
+                                from django.utils import timezone
+                                field_value = timezone.make_naive(field_value)
+                    
                     item[field_name] = field_value
                 
                 data.append(item)
             
             df = pd.DataFrame(data)
             
+            # Get the Arabic name for the sheet
+            sheet_name = model
+            if model == 'product':
+                sheet_name = 'المنتجات'
+            elif model == 'customer':
+                sheet_name = 'العملاء'
+            elif model == 'supplier':
+                sheet_name = 'الموردين'
+            elif model == 'order':
+                sheet_name = 'الطلبات'
+            elif model == 'category':
+                sheet_name = 'فئات المنتجات'
+            elif model == 'customercategory':
+                sheet_name = 'فئات العملاء'
+            elif model == 'orderitem':
+                sheet_name = 'عناصر الطلبات'
+            elif model == 'payment':
+                sheet_name = 'المدفوعات'
+            elif model == 'stocktransaction':
+                sheet_name = 'حركات المخزون'
+            elif model == 'purchaseorder':
+                sheet_name = 'طلبات الشراء'
+            elif model == 'customercontact':
+                sheet_name = 'جهات اتصال العملاء'
+            
             # Write the dataframe to the Excel file
-            df.to_excel(writer, sheet_name=model, index=False)
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
     
     # Reset the pointer to the beginning of the BytesIO object
     output.seek(0)

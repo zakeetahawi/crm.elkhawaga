@@ -18,12 +18,21 @@
                 <div class="card-header">
                     <h3 class="card-title mb-0">
                         {% if object %}
-                            {% trans 'تعديل جدولة التقرير' %}
+                            {% trans 'تعديل جدولة التقرير' %} (#{{ object.pk }} - Report #{{ object.report.pk }})
                         {% else %}
-                            {% trans 'إنشاء جدولة تقرير' %}
+                            {% trans 'إنشاء جدولة تقرير' %} (Report #{{ report.pk }})
                         {% endif %}
                     </h3>
                 </div>
+                {% if debug %}
+                <div class="alert alert-info">
+                    <strong>Debug Info:</strong><br>
+                    object: {{ object|default:"None" }}<br>
+                    object.report.pk: {{ object.report.pk|default:"None" }}<br>
+                    report: {{ report|default:"None" }}<br>
+                    report.pk: {{ report.pk|default:"None" }}
+                </div>
+                {% endif %}
                 <div class="card-body">
                     <form method="post" novalidate>
                         {% csrf_token %}
@@ -106,9 +115,15 @@
                         {% endif %}
 
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'reports:report_detail' report.pk %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> {% trans 'إلغاء' %}
-                            </a>
+                            {% if object %}
+                                <a href="{% url 'reports:report_detail' object.report.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> {% trans 'إلغاء' %}
+                                </a>
+                            {% else %}
+                                <a href="{% url 'reports:report_detail' report.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> {% trans 'إلغاء' %}
+                                </a>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> 
                                 {% if object %}

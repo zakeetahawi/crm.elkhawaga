@@ -5,39 +5,63 @@ from inventory.models import Product
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'قيد الانتظار'),
-        ('processing', 'قيد التنفيذ'),
-        ('completed', 'مكتمل'),
-        ('cancelled', 'ملغي'),
+        ('normal', 'عادي'),
+        ('vip', 'VIP'),
     ]
     
     ORDER_TYPE_CHOICES = [
-        ('goods', 'سلع'),
-        ('services', 'خدمات'),
-    ]
-    
-    GOODS_TYPE_CHOICES = [
-        ('accessories', 'اكسسوار'),
-        ('fabric', 'قماش'),
+        ('product', 'منتج'),
+        ('service', 'خدمة'),
     ]
     
     SERVICE_TYPE_CHOICES = [
-        ('inspection', 'معاينة'),
-        ('tailoring', 'تفصيل'),
         ('installation', 'تركيب'),
+        ('inspection', 'معاينة'),
         ('transport', 'نقل'),
+        ('tailoring', 'تفصيل'),
+    ]
+
+    TRACKING_STATUS_CHOICES = [
+        ('pending', 'قيد الانتظار'),
+        ('processing', 'قيد المعالجة'),
+        ('warehouse', 'في المستودع'),
+        ('factory', 'في المصنع'),
+        ('cutting', 'قيد القص'),
+        ('ready', 'جاهز للتسليم'),
+        ('delivered', 'تم التسليم'),
+    ]
+
+    DELIVERY_TYPE_CHOICES = [
+        ('home', 'توصيل للمنزل'),
+        ('branch', 'استلام من الفرع'),
+    ]
+
+    ITEM_TYPE_CHOICES = [
+        ('fabric', 'قماش'),
+        ('accessory', 'إكسسوار'),
     ]
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer_orders', verbose_name='العميل')
+    delivery_type = models.CharField(max_length=10, choices=DELIVERY_TYPE_CHOICES, default='branch', verbose_name='نوع التسليم')
+    delivery_address = models.TextField(blank=True, null=True, verbose_name='عنوان التسليم')
     order_number = models.CharField(max_length=50, unique=True, verbose_name='رقم الطلب')
     order_date = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الطلب')
-    delivery_date = models.DateField(null=True, blank=True, verbose_name='تاريخ التسليم')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='حالة الطلب')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='normal', verbose_name='حالة الطلب')
     
-    # New fields for order types
-    order_type = models.CharField(max_length=10, choices=ORDER_TYPE_CHOICES, verbose_name='نوع الطلب')
-    goods_type = models.CharField(max_length=15, choices=GOODS_TYPE_CHOICES, null=True, blank=True, verbose_name='نوع السلعة')
-    service_type = models.CharField(max_length=15, choices=SERVICE_TYPE_CHOICES, null=True, blank=True, verbose_name='نوع الخدمة')
+    # Order type fields
+    order_type = models.CharField(
+        max_length=10,
+        choices=ORDER_TYPE_CHOICES,
+        verbose_name='نوع الطلب'
+    )
+    service_types = models.JSONField(default=list, blank=True, verbose_name='أنواع الخدمات')
+    tracking_status = models.CharField(
+        max_length=20,
+        choices=TRACKING_STATUS_CHOICES,
+        default='pending',
+        verbose_name='حالة التتبع'
+    )
+    last_notification_date = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ آخر إشعار')
     invoice_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='رقم الفاتورة')
     contract_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='رقم العقد')
     payment_verified = models.BooleanField(default=False, verbose_name='تم التحقق من السداد')
@@ -46,7 +70,7 @@ class Order(models.Model):
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ المدفوع')
     notes = models.TextField(blank=True, verbose_name='ملاحظات')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name='تم الإنشاء بواسطة')
-    branch = models.ForeignKey('accounts.Branch', on_delete=models.CASCADE, related_name='branch_orders', verbose_name='الفرع', null=True)
+    branch = models.ForeignKey('accounts.Branch', on_delete=models.CASCADE, related_name='orders', verbose_name='الفرع', null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
@@ -54,6 +78,32 @@ class Order(models.Model):
         verbose_name = 'طلب'
         verbose_name_plural = 'الطلبات'
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            # Get the last order number for this customer
+            last_order = Order.objects.filter(
+                customer=self.customer
+            ).order_by('-order_number').first()
+            
+            if last_order:
+                # Extract the number part and increment it
+                try:
+                    last_num = int(last_order.order_number.split('-')[-1])
+                    next_num = last_num + 1
+                except ValueError:
+                    next_num = 1
+            else:
+                next_num = 1
+            
+            # Generate new order number
+            self.order_number = f"{self.customer.code}-{next_num:04d}"
+        
+        # Make invoice_number required for services
+        if self.order_type == 'service' and not self.invoice_number:
+            raise models.ValidationError('رقم الفاتورة مطلوب لطلبات الخدمات')
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.order_number} - {self.customer.name}'
@@ -73,6 +123,18 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='order_items', verbose_name='المنتج')
     quantity = models.PositiveIntegerField(verbose_name='الكمية')
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='سعر الوحدة')
+    item_type = models.CharField(
+        max_length=10,
+        choices=Order.ITEM_TYPE_CHOICES,
+        default='fabric',
+        verbose_name='نوع العنصر'
+    )
+    processing_status = models.CharField(
+        max_length=20,
+        choices=Order.TRACKING_STATUS_CHOICES,
+        default='pending',
+        verbose_name='حالة المعالجة'
+    )
     notes = models.TextField(blank=True, verbose_name='ملاحظات')
 
     class Meta:

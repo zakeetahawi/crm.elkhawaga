@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'orders'
 
+
 urlpatterns = [
     # Order URLs
     path('', views.order_list, name='order_list'),
@@ -14,4 +15,5 @@ urlpatterns = [
     # Payment URLs
     path('<int:order_pk>/payment/create/', views.payment_create, name='payment_create'),
     path('payment/<int:pk>/delete/', views.payment_delete, name='payment_delete'),
+
 ]

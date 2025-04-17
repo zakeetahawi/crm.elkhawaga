@@ -134,24 +134,53 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    {% if customer.orders.all %}
+                    {% if orders %}
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
                                     <th>{% trans 'رقم الطلب' %}</th>
                                     <th>{% trans 'التاريخ' %}</th>
+                                    <th>{% trans 'نوع الطلب' %}</th>
                                     <th>{% trans 'الحالة' %}</th>
                                     <th>{% trans 'القيمة' %}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for order in customer.orders.all|slice:":5" %}
+                                {% for order in orders %}
                                 <tr>
-                                    <td>{{ order.number }}</td>
+                                    <td>
+                                        <a href="{% url 'orders:order_detail' order.pk %}">
+                                            {{ order.order_number }}
+                                        </a>
+                                    </td>
                                     <td>{{ order.created_at|date:"Y/m/d" }}</td>
-                                    <td>{{ order.get_status_display }}</td>
-                                    <td>{{ order.total_amount }}</td>
+                                    <td>
+                                        {% if order.order_type == 'product' %}
+                                            <span class="badge bg-primary">منتج</span>
+                                        {% elif order.order_type == 'service' %}
+                                            <span class="badge bg-info">خدمة</span>
+                                            {% for service_type in order.service_types %}
+                                                {% if service_type == 'installation' %}
+                                                    <span class="badge bg-secondary">تركيب</span>
+                                                {% elif service_type == 'inspection' %}
+                                                    <span class="badge bg-warning">معاينة</span>
+                                                {% elif service_type == 'transport' %}
+                                                    <span class="badge bg-dark">نقل</span>
+                                                {% elif service_type == 'tailoring' %}
+                                                    <span class="badge bg-success">تفصيل</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if order.tracking_status == 'pending' %}bg-warning
+                                                   {% elif order.tracking_status == 'delivered' %}bg-success
+                                                   {% else %}bg-info{% endif %}">
+                                            {{ order.get_tracking_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.total_amount }} ج.م</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -174,24 +203,43 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    {% if customer.inspections.all %}
+                    {% if inspections %}
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>{% trans 'رقم العقد' %}</th>
-                                    <th>{% trans 'التاريخ' %}</th>
+                                    <th>{% trans 'رقم المعاينة' %}</th>
+                                    <th>{% trans 'تاريخ التنفيذ' %}</th>
                                     <th>{% trans 'الحالة' %}</th>
                                     <th>{% trans 'النتيجة' %}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for inspection in customer.inspections.all|slice:":5" %}
+                                {% for inspection in inspections %}
                                 <tr>
-                                    <td>{{ inspection.contract_number }}</td>
+                                    <td>
+                                        <a href="{% url 'inspections:inspection_detail' inspection.pk %}">
+                                            {{ inspection.id }}
+                                        </a>
+                                    </td>
                                     <td>{{ inspection.scheduled_date|date:"Y/m/d" }}</td>
-                                    <td>{{ inspection.get_status_display }}</td>
-                                    <td>{{ inspection.get_result_display|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge {% if inspection.status == 'pending' %}bg-warning
+                                                   {% elif inspection.status == 'completed' %}bg-success
+                                                   {% else %}bg-danger{% endif %}">
+                                            {{ inspection.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if inspection.result %}
+                                            <span class="badge {% if inspection.result == 'passed' %}bg-success
+                                                       {% else %}bg-danger{% endif %}">
+                                                {{ inspection.get_result_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

@@ -50,35 +50,64 @@ def import_data(request):
             import_log.file_name = request.FILES['file'].name
             import_log.status = 'processing'
             import_log.created_by = request.user
+            
+            # Check if it's a multi-sheet import
+            is_multi_sheet = form.cleaned_data.get('is_multi_sheet', False)
+            model_name = form.cleaned_data['model_name']
+            import_log.is_multi_sheet = is_multi_sheet or model_name == 'multi_sheet'
+            
+            # If model_name is 'multi_sheet', set it to a default value temporarily
+            # It will be determined automatically during processing
+            if model_name == 'multi_sheet':
+                import_log.model_name = 'inventory.product'  # Temporary value
+            else:
+                import_log.model_name = model_name
+                
             import_log.save()
             
             try:
                 # Process the file
                 file_path = import_log.file.path
-                model_name = form.cleaned_data['model_name']
+                file_ext = os.path.splitext(file_path)[1].lower()
+                
+                # Handle multi-sheet Excel file
+                if file_ext == '.xlsx' and import_log.is_multi_sheet:
+                    # Process multi-sheet Excel file
+                    from .utils import process_multi_sheet_import
+                    success_count, error_count, error_details_list = process_multi_sheet_import(file_path, import_log)
+                    error_details = '\n'.join(error_details_list)
+                    records_count = success_count + error_count
+                    
+                    # Update import log
+                    import_log.records_count = records_count
+                    import_log.success_count = success_count
+                    import_log.error_count = error_count
+                    import_log.error_details = error_details
+                    import_log.status = 'completed' if error_count == 0 else 'failed'
+                    import_log.completed_at = timezone.now()
+                    import_log.save()
+                    
+                    messages.success(request, f'تم استيراد {success_count} من {records_count} سجل بنجاح من ملف متعدد الصفحات.')
+                    if error_count > 0:
+                        messages.warning(request, f'فشل استيراد {error_count} سجل. راجع سجل الاستيراد للتفاصيل.')
+                    
+                    return redirect('data_import_export:import_log_detail', pk=import_log.pk)
+                
+                # Handle single-model import
+                model_name = import_log.model_name
                 app_label, model = model_name.split('.')
                 
                 # Get the model class
                 model_class = apps.get_model(app_label, model)
                 content_type = ContentType.objects.get_for_model(model_class)
                 import_log.content_type = content_type
+                import_log.save()
                 
-                # Read the file based on its extension
-                file_ext = os.path.splitext(file_path)[1].lower()
-                
+                # Process the file based on its extension
                 if file_ext == '.xlsx':
-                    # Check if it's a multi-sheet Excel file
-                    xls = pd.ExcelFile(file_path)
-                    if len(xls.sheet_names) > 1:
-                        # Process multi-sheet Excel file
-                        from .utils import process_multi_sheet_import
-                        success_count, error_count, error_details_list = process_multi_sheet_import(file_path, import_log)
-                        error_details = '\n'.join(error_details_list)
-                        records_count = success_count + error_count
-                    else:
-                        # Process single-sheet Excel file
-                        df = pd.read_excel(file_path)
-                        records_count, success_count, error_count, error_details = process_dataframe(df, model, model_class)
+                    # Process Excel file
+                    df = pd.read_excel(file_path)
+                    records_count, success_count, error_count, error_details = process_dataframe(df, model, model_class)
                 elif file_ext == '.csv':
                     df = pd.read_csv(file_path)
                     records_count, success_count, error_count, error_details = process_dataframe(df, model, model_class)
@@ -88,7 +117,7 @@ def import_data(request):
                     df = pd.DataFrame(data)
                     records_count, success_count, error_count, error_details = process_dataframe(df, model, model_class)
                 else:
-                    raise ValueError(f"Unsupported file format: {file_ext}")
+                    raise ValueError(f"صيغة الملف غير مدعومة: {file_ext}")
                 
                 # Update import log
                 import_log.records_count = records_count
@@ -243,17 +272,44 @@ def export_data(request):
                 df = pd.DataFrame(data)
                 
                 # Check if multi-sheet export is requested
-                if export_format == 'xlsx' and form.cleaned_data.get('multi_sheet', False):
-                    # Get related models
+                if export_format == 'xlsx' and form.cleaned_data.get('multi_sheet', True):
+                    # Get related models based on the selected model
                     app_label = model_name.split('.')[0]
                     related_models = []
                     
+                    # Define comprehensive model relationships for each app
                     if app_label == 'inventory':
-                        related_models = ['inventory.product', 'inventory.supplier']
+                        related_models = [
+                            'inventory.product', 
+                            'inventory.supplier', 
+                            'inventory.category',
+                            'inventory.stocktransaction',
+                            'inventory.purchaseorder'
+                        ]
                     elif app_label == 'customers':
-                        related_models = ['customers.customer']
+                        related_models = [
+                            'customers.customer', 
+                            'customers.customercategory',
+                            'customers.customercontact'
+                        ]
                     elif app_label == 'orders':
-                        related_models = ['orders.order', 'orders.payment']
+                        related_models = [
+                            'orders.order', 
+                            'orders.orderitem', 
+                            'orders.payment'
+                        ]
+                    elif model_name == 'multi_sheet':
+                        # Export all main models if multi-sheet option is selected
+                        related_models = [
+                            'inventory.product', 
+                            'inventory.supplier', 
+                            'inventory.category',
+                            'customers.customer', 
+                            'customers.customercategory',
+                            'orders.order', 
+                            'orders.orderitem', 
+                            'orders.payment'
+                        ]
                     else:
                         related_models = [model_name]
                     

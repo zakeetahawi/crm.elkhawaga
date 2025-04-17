@@ -115,7 +115,7 @@ class Inspection(models.Model):
         ('failed', _('غير مجدية')),
     ]
 
-    contract_number = models.CharField(_('رقم العقد'), max_length=50, unique=True)
+    contract_number = models.CharField(_('رقم العقد'), max_length=50, unique=True, blank=True, null=True)
     customer = models.ForeignKey(
         Customer,
         on_delete=models.PROTECT,

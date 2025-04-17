@@ -71,13 +71,16 @@ class CompanyInfoAdmin(admin.ModelAdmin):
     list_display = ('name', 'phone', 'email', 'website')
     fieldsets = (
         (_('معلومات أساسية'), {
-            'fields': ('name', 'logo', 'address', 'phone', 'email', 'website')
+            'fields': ('name', 'logo', 'address', 'phone', 'email', 'website', 'version', 'release_date', 'working_hours')
+        }),
+        (_('عن النظام'), {
+            'fields': ('description',)
         }),
         (_('معلومات قانونية'), {
             'fields': ('tax_number', 'commercial_register')
         }),
         (_('وسائل التواصل الاجتماعي'), {
-            'fields': ('facebook', 'twitter', 'instagram', 'linkedin')
+            'fields': ('facebook', 'twitter', 'instagram', 'linkedin', 'social_links')
         }),
         (_('معلومات إضافية'), {
             'fields': ('about', 'vision', 'mission')

@@ -124,6 +124,42 @@
                     {% endif %}
                 </div>
             </div>
+            
+            <!-- Customer Notes -->
+            {% if inspection.status == 'pending' and inspection.customer and inspection.customer.notes %}
+            <div class="card mb-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">{% trans 'ملاحظات العميل' %}</h5>
+                </div>
+                <div class="card-body bg-warning">
+                    <div class="mb-3 fw-bold">
+                        {{ inspection.customer.notes|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Customer History -->
+            {% if inspection.customer and customer_notes %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans 'سجل ملاحظات العميل' %}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for note in customer_notes %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">{{ note.created_at|date:"Y/m/d" }}</small>
+                                <small class="text-muted">{{ note.created_by.get_full_name }}</small>
+                            </div>
+                            <p class="mb-0 mt-1">{{ note.note }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Branch Details -->
             <div class="card mb-4">

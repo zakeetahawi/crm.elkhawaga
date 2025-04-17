@@ -11,7 +11,8 @@ class ImportForm(forms.ModelForm):
     model_name = forms.ChoiceField(
         label=_('نموذج البيانات'),
         choices=[],
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        help_text=_('اختر نوع البيانات التي تريد استيرادها. إذا كنت تستخدم ملف متعدد الصفحات، سيتم تجاهل هذا الخيار وسيتم تحديد النوع تلقائياً من اسم الصفحة.')
     )
     
     file = forms.FileField(
@@ -19,15 +20,24 @@ class ImportForm(forms.ModelForm):
         widget=forms.FileInput(attrs={'class': 'form-control'})
     )
     
+    is_multi_sheet = forms.BooleanField(
+        label=_('ملف متعدد الصفحات'),
+        required=False,
+        initial=True,
+        help_text=_('حدد هذا الخيار إذا كان الملف يحتوي على صفحات متعددة لأنواع مختلفة من البيانات. سيتم تحديد نوع البيانات تلقائياً من اسم الصفحة.'),
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
     class Meta:
         model = ImportExportLog
-        fields = ['model_name', 'file']
+        fields = ['model_name', 'file', 'is_multi_sheet']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         # Get all models that can be imported
         importable_models = [
+            ('multi_sheet', _('ملف متعدد الصفحات (تحديد تلقائي)')),
             ('inventory.product', _('المنتجات')),
             ('inventory.supplier', _('الموردين')),
             ('customers.customer', _('العملاء')),
@@ -59,8 +69,9 @@ class ExportForm(forms.ModelForm):
     multi_sheet = forms.BooleanField(
         label=_('تصدير متعدد الصفحات'),
         required=False,
+        initial=True,
         help_text=_('تصدير البيانات في ملف Excel متعدد الصفحات (يعمل فقط مع صيغة Excel)'),
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'checked': 'checked'})
     )
     
     class Meta:

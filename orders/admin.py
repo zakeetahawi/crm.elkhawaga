@@ -19,13 +19,10 @@ class OrderAdmin(AdminMultiSheetImportExportMixin, admin.ModelAdmin):
     search_fields = ('order_number', 'customer__name', 'notes')
     date_hierarchy = 'created_at'
     inlines = [OrderItemInline, PaymentInline]
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'order_date')
     fieldsets = (
         (_('معلومات أساسية'), {
             'fields': ('customer', 'order_number', 'status')
-        }),
-        (_('تواريخ'), {
-            'fields': ('order_date', 'delivery_date')
         }),
         (_('معلومات مالية'), {
             'fields': ('total_amount', 'paid_amount')
@@ -34,7 +31,7 @@ class OrderAdmin(AdminMultiSheetImportExportMixin, admin.ModelAdmin):
             'fields': ('notes',)
         }),
         (_('معلومات النظام'), {
-            'fields': ('created_by', 'created_at', 'updated_at'),
+            'fields': ('created_by', 'created_at', 'order_date', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

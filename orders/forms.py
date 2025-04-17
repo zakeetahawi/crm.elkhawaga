@@ -1,29 +1,16 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from .models import Order, OrderItem, Payment
-# These models are already defined in models.py
-from .models import Order, OrderItem, Payment
-
-class OrderForm(forms.ModelForm):
-    class Meta:
-        model = Order
-        fields = ['customer', 'order_number', 'delivery_date', 'status', 'notes']
-        widgets = {
-            'customer': forms.Select(attrs={'class': 'form-select'}),
-            'order_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'delivery_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
 
 class OrderItemForm(forms.ModelForm):
     class Meta:
         model = OrderItem
-        fields = ['product', 'quantity', 'unit_price', 'notes']
+        fields = ['product', 'quantity', 'unit_price', 'item_type', 'notes']
         widgets = {
             'product': forms.Select(attrs={'class': 'form-select'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'unit_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'item_type': forms.Select(attrs={'class': 'form-select'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
@@ -47,33 +34,109 @@ OrderItemFormSet = forms.inlineformset_factory(
     can_delete=True,
 )
 
-# ExtendedOrderForm is merged into the main OrderForm since the fields are now in Order model
 class OrderForm(forms.ModelForm):
+    # Override status choices to match requirements
+    STATUS_CHOICES = [
+        ('normal', 'عادي'),
+        ('vip', 'VIP'),
+    ]
+    
+    # Override order type choices to match requirements
+    ORDER_TYPE_CHOICES = [
+        ('product', 'منتج'),
+        ('service', 'خدمة'),
+    ]
+    
+    # Override status field to use our custom choices
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        required=False
+    )
+    
+    # Override order_type field to use our custom choices
+    order_type = forms.ChoiceField(
+        choices=ORDER_TYPE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        required=False
+    )
+    
     class Meta:
         model = Order
         fields = [
-            'customer', 'order_number', 'delivery_date', 'status',
-            'order_type', 'goods_type', 'service_type', 'invoice_number',
-            'contract_number', 'payment_verified', 'branch', 'notes'
+            'customer', 'status', 'order_type',
+            'invoice_number', 'contract_number', 'branch', 'tracking_status', 'notes'
         ]
         widgets = {
-            'customer': forms.Select(attrs={'class': 'form-select'}),
-            'order_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'delivery_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'order_type': forms.Select(attrs={'class': 'form-select'}),
-            'goods_type': forms.Select(attrs={'class': 'form-select'}),
-            'service_type': forms.Select(attrs={'class': 'form-select'}),
+            'customer': forms.Select(attrs={
+                'class': 'form-select',
+                'data-placeholder': 'اختر العميل'
+            }),
+            'tracking_status': forms.Select(attrs={'class': 'form-select'}),
             'invoice_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'contract_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'payment_verified': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'branch': forms.Select(attrs={'class': 'form-select'}),
+            'contract_number': forms.TextInput(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['goods_type'].required = False
-        self.fields['service_type'].required = False
+        # Make all fields optional
+        for field_name in self.fields:
+            self.fields[field_name].required = False
+            
+        # Make order_number read-only but visible
+        if 'order_number' in self.fields:
+            self.fields['order_number'].widget.attrs['readonly'] = True
+            self.fields['order_number'].widget.attrs['class'] = 'form-control'
+        else:
+            # Add order_number field if it doesn't exist
+            self.fields['order_number'] = forms.CharField(
+                required=False,
+                widget=forms.TextInput(attrs={
+                    'class': 'form-control',
+                    'readonly': True,
+                    'placeholder': 'سيتم إنشاؤه تلقائياً'
+                }),
+                label='رقم الطلب'
+            )
+        
+        # Add service types field
+        self.fields['service_types'] = forms.MultipleChoiceField(
+            choices=Order.SERVICE_TYPE_CHOICES,
+            widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+            required=False,
+            initial=[]
+        )
+        
+        # Make invoice_number and contract_number not required initially
         self.fields['invoice_number'].required = False
         self.fields['contract_number'].required = False
+        
+        # Set branch to user's branch if available
+        if 'initial' in kwargs and 'user' in kwargs['initial']:
+            user = kwargs['initial']['user']
+            if hasattr(user, 'branch') and user.branch:
+                self.fields['branch'].initial = user.branch
+                # If not superuser, limit branch choices to user's branch
+                if not user.is_superuser:
+                    self.fields['branch'].widget.attrs['readonly'] = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        order_type = cleaned_data.get('order_type')
+        service_types_hidden = self.data.get('service_types_hidden', '')
+
+        if order_type == 'service':
+            # Get service types from hidden input
+            service_types = [st.strip() for st in service_types_hidden.split(',') if st.strip()]
+            
+            # Save to cleaned_data
+            cleaned_data['service_types'] = service_types
+        
+        # For product orders, any validation will be handled in the view
+        elif order_type == 'product':
+            # Clear service types for product orders
+            cleaned_data['service_types'] = []
+
+        return cleaned_data

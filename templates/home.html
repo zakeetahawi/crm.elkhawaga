@@ -89,12 +89,15 @@
                                 <td>{{ order.customer.name }}</td>
                                 <td>{{ order.order_date|date:"Y-m-d" }}</td>
                                 <td>
-                                    <span class="badge {% if order.status == 'completed' %}bg-success{% elif order.status == 'processing' %}" style="background-color: var(--light-accent); color: var(--dark-text);{% elif order.status == 'cancelled' %}" style="background-color: var(--alert); color: white;{% else %}bg-secondary{% endif %}">
-                                        {{ order.get_status_display }}
-                                    </span>
+                                    <span class="badge{% if order.status == 'completed' %} bg-success{% elif order.status == 'processing' %} bg-info{% elif order.status == 'cancelled' %} bg-danger{% else %} bg-secondary{% endif %}"{% if order.status == 'processing' %} style="background-color: var(--light-accent); color: var(--dark-text);"{% elif order.status == 'cancelled' %} style="background-color: var(--alert); color: white;"{% endif %}>
+    {{ order.get_status_display }}
+</span>
                                 </td>
                             </tr>
                             {% endfor %}
+                            {% if not recent_orders %}
+                            <tr><td colspan="4" class="text-center">لا توجد طلبات حديثة</td></tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -132,13 +135,16 @@
                                 <td>{{ production.order.order_number }}</td>
                                 <td>{{ production.production_line.name }}</td>
                                 <td>
-                                    <span class="badge {% if production.status == 'completed' %}bg-success{% elif production.status == 'in_progress' %}" style="background-color: var(--primary); color: white;{% elif production.status == 'quality_check' %}" style="background-color: var(--light-accent); color: var(--dark-text);{% elif production.status == 'cancelled' %}" style="background-color: var(--alert); color: white;{% else %}bg-secondary{% endif %}">
-                                        {{ production.get_status_display }}
-                                    </span>
+                                    <span class="badge{% if production.status == 'completed' %} bg-success{% elif production.status == 'in_progress' %} bg-info{% elif production.status == 'quality_check' %} bg-warning{% elif production.status == 'cancelled' %} bg-danger{% else %} bg-secondary{% endif %}"{% if production.status == 'in_progress' %} style="background-color: var(--primary); color: white;"{% elif production.status == 'quality_check' %} style="background-color: var(--light-accent); color: var(--dark-text);"{% elif production.status == 'cancelled' %} style="background-color: var(--alert); color: white;"{% endif %}>
+    {{ production.get_status_display }}
+</span>
                                 </td>
                                 <td>{{ production.estimated_completion|date:"Y-m-d" }}</td>
                             </tr>
                             {% endfor %}
+                            {% if not production_orders %}
+                            <tr><td colspan="4" class="text-center">لا توجد أوامر إنتاج حالية</td></tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -185,6 +191,9 @@
                                 </td>
                             </tr>
                             {% endfor %}
+                            {% if not low_stock_products %}
+                            <tr><td colspan="5" class="text-center">لا توجد منتجات ذات مخزون منخفض</td></tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>

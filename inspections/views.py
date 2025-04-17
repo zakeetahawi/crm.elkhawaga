@@ -31,13 +31,22 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         branch = self.request.user.branch
         inspections = Inspection.objects.filter(branch=branch)
         
+        # Print debug information
+        print(f"Dashboard - Found {inspections.count()} inspections for branch {branch}")
+        for inspection in inspections:
+            print(f"Inspection ID: {inspection.id}, Customer: {inspection.customer}, Status: {inspection.status}")
+        
+        # Get completed inspections count
+        completed_inspections = inspections.filter(status='completed')
+        completed_count = completed_inspections.count()
+        
         # Statistics
         context['total_inspections'] = inspections.count()
         context['pending_inspections'] = inspections.filter(status='pending').count()
-        context['completed_inspections'] = inspections.filter(status='completed').count()
+        context['completed_inspections'] = completed_count
         context['success_rate'] = (
-            int((inspections.filter(result='passed').count() / inspections.filter(status='completed').count()) * 100)
-            if inspections.filter(status='completed').exists() else 0
+            int((completed_inspections.filter(result='passed').count() / completed_count) * 100)
+            if completed_count > 0 else 0
         )
         
         # Recent inspections
@@ -52,24 +61,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Monthly statistics
         today = timezone.now().date()
         start_of_month = today.replace(day=1)
+        monthly_inspections = inspections.filter(request_date__gte=start_of_month)
+        monthly_completed = monthly_inspections.filter(status='completed')
+        monthly_completed_count = monthly_completed.count()
+        
         context['monthly_stats'] = {
-            'total': inspections.filter(request_date__gte=start_of_month).count(),
-            'completed': inspections.filter(
-                status='completed',
-                request_date__gte=start_of_month
-            ).count(),
+            'total': monthly_inspections.count(),
+            'completed': monthly_completed_count,
             'success_rate': (
-                int((inspections.filter(
-                    result='passed',
-                    request_date__gte=start_of_month
-                ).count() / inspections.filter(
-                    status='completed',
-                    request_date__gte=start_of_month
-                ).count()) * 100)
-                if inspections.filter(
-                    status='completed',
-                    request_date__gte=start_of_month
-                ).exists() else 0
+                int((monthly_completed.filter(result='passed').count() / monthly_completed_count) * 100)
+                if monthly_completed_count > 0 else 0
             )
         }
         
@@ -83,6 +84,10 @@ class InspectionListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # Filter by user's branch
+        if not self.request.user.is_superuser:
+            queryset = queryset.filter(branch=self.request.user.branch)
         
         # Search functionality
         search = self.request.GET.get('search')
@@ -104,6 +109,19 @@ class InspectionDetailView(LoginRequiredMixin, DetailView):
     model = Inspection
     template_name = 'inspections/inspection_detail.html'
     context_object_name = 'inspection'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get customer notes if customer exists
+        if self.object.customer:
+            from customers.models import CustomerNote
+            customer_notes = CustomerNote.objects.filter(
+                customer=self.object.customer
+            ).order_by('-created_at')[:5]
+            context['customer_notes'] = customer_notes
+            
+        return context
 
 class InspectionCreateView(LoginRequiredMixin, CreateView):
     model = Inspection

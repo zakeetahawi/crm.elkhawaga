@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -71,8 +72,20 @@ def customer_detail(request, pk):
     View for displaying customer details, orders, and notes
     """
     customer = get_object_or_404(Customer, pk=pk)
-    orders = customer.customer_orders.all().order_by('-order_date')[:5]
+    
+    # Get orders with items only (for product orders)
+    orders = []
+    for order in customer.customer_orders.all().order_by('-created_at')[:5]:
+        # Include service orders always
+        if order.order_type == 'service':
+            orders.append(order)
+        # Include product orders only if they have items
+        elif order.order_type == 'product' and order.items.exists():
+            orders.append(order)
+    
+    # Get inspections with status and result
     inspections = customer.inspections.all().order_by('-created_at')[:5]
+    
     note_form = CustomerNoteForm()
     
     context = {
@@ -85,6 +98,7 @@ def customer_detail(request, pk):
     return render(request, 'customers/customer_detail.html', context)
 
 @login_required
+@permission_required('customers.add_customer', raise_exception=True)
 def customer_create(request):
     """
     View for creating a new customer with image upload
@@ -101,7 +115,21 @@ def customer_create(request):
                 customer = form.save(commit=False)
                 customer.created_by = request.user
                 customer.branch = request.user.branch
+                
+                # Get notes before saving customer
+                notes_text = form.cleaned_data.get('notes')
+                
+                # Save customer first
                 customer.save()
+                
+                # Create CustomerNote if notes were provided
+                if notes_text:
+                    CustomerNote.objects.create(
+                        customer=customer,
+                        note=notes_text,
+                        created_by=request.user
+                    )
+                
                 messages.success(request, 'تم إضافة العميل بنجاح.')
                 return redirect('customers:customer_detail', pk=customer.pk)
             except Exception as e:
@@ -117,6 +145,7 @@ def customer_create(request):
     return render(request, 'customers/customer_form.html', context)
 
 @login_required
+@permission_required('customers.change_customer', raise_exception=True)
 def customer_update(request, pk):
     """
     View for updating customer details including image
@@ -141,6 +170,7 @@ def customer_update(request, pk):
     return render(request, 'customers/customer_form.html', context)
 
 @login_required
+@permission_required('customers.delete_customer', raise_exception=True)
 def customer_delete(request, pk):
     """
     View for deleting a customer and their related data
@@ -244,3 +274,34 @@ def delete_customer_category(request, category_id):
     
     category.delete()
     return JsonResponse({'status': 'success'})
+
+@login_required
+def get_customer_notes(request, pk):
+    """API endpoint to get customer notes"""
+    customer = get_object_or_404(Customer, pk=pk)
+    notes = customer.notes_history.all().order_by('-created_at')
+    notes_data = [{
+        'note': note.note,
+        'created_at': note.created_at.strftime('%Y-%m-%d %H:%M'),
+        'created_by': note.created_by.get_full_name() or note.created_by.username
+    } for note in notes]
+    
+    return JsonResponse({'notes': notes_data})
+
+@login_required
+def get_customer_details(request, pk):
+    """API endpoint to get customer details"""
+    customer = get_object_or_404(Customer, pk=pk)
+    
+    customer_data = {
+        'id': customer.id,
+        'name': customer.name,
+        'code': customer.code,
+        'phone': customer.phone,
+        'email': customer.email,
+        'address': customer.address,
+        'customer_type': customer.get_customer_type_display(),
+        'status': customer.get_status_display()
+    }
+    
+    return JsonResponse(customer_data)

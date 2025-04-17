@@ -52,15 +52,19 @@
                     <table class="table">
                         <tr>
                             <th>إصدار النظام:</th>
-                            <td>1.0.0</td>
+                            <td>{{ company_info.version|default:'1.0.0' }}</td>
                         </tr>
                         <tr>
                             <th>تاريخ الإطلاق:</th>
-                            <td>2025</td>
+                            <td>{{ company_info.release_date|default:'2025' }}</td>
                         </tr>
                         <tr>
                             <th>المطور:</th>
-                            <td>شركة الخواجة للبرمجيات</td>
+                            <td>{{ company_info.developer|default:company_info.name|default:'شركة الخواجة للبرمجيات' }}</td>
+                        </tr>
+                        <tr>
+                            <th>عن النظام:</th>
+                            <td>{{ company_info.description|default:'نظام متكامل لإدارة العملاء والمبيعات والإنتاج والمخزون' }}</td>
                         </tr>
                     </table>
                 </div>

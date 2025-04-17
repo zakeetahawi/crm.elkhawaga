@@ -165,37 +165,47 @@ def mark_all_notifications_read(request):
     
     return JsonResponse({'success': False, 'message': 'طريقة غير صالحة.'})
 
-@staff_member_required
+@login_required
 def company_info_view(request):
-    """
-    View for managing company information
-    """
-    # Get or create company info
-    company, created = CompanyInfo.objects.get_or_create(
-        defaults={
-            'name': 'شركة الخواجه',
-            'address': 'العنوان',
-            'phone': '01234567890',
-            'email': 'info@example.com',
+    try:
+        if not request.user.is_superuser:
+            messages.error(request, 'هذه الصفحة متاحة فقط لمديري النظام.')
+            return redirect('home')
+        """
+        View for managing company information
+        """
+        # Get or create company info
+        company, created = CompanyInfo.objects.get_or_create(
+            defaults={
+                'name': 'شركة الخواجه',
+                'address': 'العنوان',
+                'phone': '01234567890',
+                'email': 'info@example.com',
+            }
+        )
+        
+        if request.method == 'POST':
+            form = CompanyInfoForm(request.POST, request.FILES, instance=company)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'تم تحديث معلومات الشركة بنجاح.')
+                return redirect('accounts:company_info')
+        else:
+            form = CompanyInfoForm(instance=company)
+        
+        context = {
+            'form': form,
+            'company': company,
+            'title': 'معلومات الشركة',
         }
-    )
-    
-    if request.method == 'POST':
-        form = CompanyInfoForm(request.POST, request.FILES, instance=company)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'تم تحديث معلومات الشركة بنجاح.')
-            return redirect('accounts:company_info')
-    else:
-        form = CompanyInfoForm(instance=company)
-    
-    context = {
-        'form': form,
-        'company': company,
-        'title': 'معلومات الشركة',
-    }
-    
-    return render(request, 'accounts/company_info.html', context)
+        
+        return render(request, 'accounts/company_info.html', context)
+    except Exception as e:
+        import traceback
+        print("[CompanyInfo Error]", e)
+        traceback.print_exc()
+        messages.error(request, 'حدث خطأ غير متوقع أثناء معالجة معلومات الشركة. يرجى مراجعة الدعم الفني.')
+        return redirect('home')
 
 @staff_member_required
 def form_field_list(request):

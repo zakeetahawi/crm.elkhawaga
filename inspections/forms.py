@@ -132,6 +132,7 @@ class InspectionForm(forms.ModelForm):
         self.fields['notes'].required = False
         self.fields['result'].required = False
         self.fields['customer'].required = False  # For new customers
+        self.fields['contract_number'].required = False  # Make contract number optional for inspection service
 
         # Add Bootstrap classes
         for field in self.fields:

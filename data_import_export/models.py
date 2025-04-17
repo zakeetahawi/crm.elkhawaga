@@ -27,6 +27,7 @@ class ImportExportLog(models.Model):
     # Target model information
     model_name = models.CharField(_('اسم النموذج'), max_length=100)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    is_multi_sheet = models.BooleanField(_('ملف متعدد الصفحات'), default=False)
     
     # Operation details
     status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='pending')

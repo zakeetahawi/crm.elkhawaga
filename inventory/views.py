@@ -279,6 +279,9 @@ def product_api_detail(request, pk):
     """
     try:
         product = get_object_or_404(Product, pk=pk)
+        # Determine product type based on category name
+        product_type = 'fabric' if product.category and 'قماش' in product.category.name.lower() else 'accessory'
+        
         data = {
             'id': product.id,
             'name': product.name,
@@ -286,9 +289,68 @@ def product_api_detail(request, pk):
             'price': float(product.price),
             'current_stock': product.current_stock,
             'unit': product.unit,
+            'product_type': product_type,
         }
         return JsonResponse(data)
     except Product.DoesNotExist:
         return JsonResponse({'error': 'Product not found'}, status=404)
     except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def product_api_list(request):
+    """
+    API endpoint for getting all products with search functionality
+    """
+    try:
+        # Get filter parameters
+        category_id = request.GET.get('category', None)
+        product_type = request.GET.get('type', None)
+        search_query = request.GET.get('search', None)
+        
+        # Start with all products
+        products = Product.objects.all()
+        
+        # Apply search filter if provided
+        if search_query:
+            products = products.filter(
+                Q(name__icontains=search_query) | 
+                Q(code__icontains=search_query)
+            )
+            print(f"Searching for products with query: {search_query}")
+        
+        # Apply category filter if provided
+        if category_id:
+            products = products.filter(category_id=category_id)
+        
+        # Apply product type filter if provided
+        if product_type:
+            # Filter by product type (fabric or accessory)
+            if product_type == 'fabric':
+                products = products.filter(category__name__icontains='قماش')
+            elif product_type == 'accessory':
+                products = products.filter(category__name__icontains='إكسسوار')
+        
+        # Convert to list of dictionaries
+        products_data = []
+        for product in products:
+            # Determine product type based on category name
+            product_type = 'fabric' if product.category and product.category.name and 'قماش' in product.category.name.lower() else 'accessory'
+            
+            products_data.append({
+                'id': product.id,
+                'name': product.name,
+                'code': product.code,
+                'price': float(product.price),
+                'current_stock': product.current_stock,
+                'unit': product.unit,
+                'product_type': product_type,
+            })
+        
+        # Log the number of products being returned
+        print(f"Returning {len(products_data)} products")
+        
+        return JsonResponse(products_data, safe=False)
+    except Exception as e:
+        print(f"Error in product_api_list: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)

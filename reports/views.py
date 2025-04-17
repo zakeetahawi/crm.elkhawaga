@@ -208,6 +208,7 @@ class ReportScheduleCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['report'] = get_object_or_404(Report, pk=self.kwargs['pk'])
+        context['debug'] = True  # Enable debug information for creation form too
         return context
     
     def form_valid(self, form):
@@ -226,6 +227,12 @@ class ReportScheduleUpdateView(LoginRequiredMixin, UpdateView):
     
     def get_queryset(self):
         return ReportSchedule.objects.filter(created_by=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report'] = self.object.report
+        context['debug'] = True  # Enable debug information
+        return context
     
     def form_valid(self, form):
         messages.success(self.request, _('تم تحديث جدولة التقرير بنجاح'))

@@ -2,7 +2,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.conf import settings
-from accounts.models import Branch, User
+from django.contrib.auth import get_user_model
+from accounts.models import Branch
+
+User = get_user_model()
 
 class CustomerCategory(models.Model):
     name = models.CharField(_('اسم التصنيف'), max_length=50)

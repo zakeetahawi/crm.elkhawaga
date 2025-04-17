@@ -22,4 +22,8 @@ urlpatterns = [
     path('categories/add/', views.add_customer_category, name='add_category'),
     path('categories/<int:category_id>/delete/', 
          views.delete_customer_category, name='delete_category'),
+         
+    # API Endpoints
+    path('api/<int:pk>/notes/', views.get_customer_notes, name='api_customer_notes'),
+    path('api/customer/<int:pk>/', views.get_customer_details, name='api_customer_details'),
 ]

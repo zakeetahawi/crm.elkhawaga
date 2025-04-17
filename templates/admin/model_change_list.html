@@ -4,14 +4,14 @@
 {% block object-tools-items %}
     {% if import_url %}
     <li>
-        <a href="{% url import_url %}" class="addlink">
+        <a href="./import/" class="addlink">
             {% trans "Import" %}
         </a>
     </li>
     {% endif %}
     {% if export_url %}
     <li>
-        <a href="{% url export_url %}" class="addlink">
+        <a href="./export/" class="addlink">
             {% trans "Export" %}
         </a>
     </li>

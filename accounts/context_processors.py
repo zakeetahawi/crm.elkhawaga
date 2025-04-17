@@ -25,15 +25,20 @@ def notifications(request):
     Context processor to add notifications to all templates
     """
     unread_notifications = []
+    recent_notifications = []
     notifications_count = 0
     
     if request.user.is_authenticated:
         # Get unread notifications for the user
         unread_notifications = get_user_notifications(request.user, unread_only=True, limit=5)
         notifications_count = unread_notifications.count()
+        
+        # Get recent notifications (both read and unread)
+        recent_notifications = get_user_notifications(request.user, unread_only=False, limit=5)
     
     return {
         'unread_notifications': unread_notifications,
+        'recent_notifications': recent_notifications,
         'notifications_count': notifications_count,
     }
 

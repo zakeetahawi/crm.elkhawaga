@@ -110,7 +110,7 @@ class CompanyInfoForm(forms.ModelForm):
     """
     class Meta:
         model = CompanyInfo
-        fields = '__all__'
+        exclude = ['developer']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('اسم الشركة')}),
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
