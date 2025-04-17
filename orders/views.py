@@ -87,18 +87,17 @@ def order_create(request):
         form = OrderForm(request.POST)
         formset = OrderItemFormSet(request.POST)
         
-        # Print form errors if any
+        # تحقق من صحة النموذج قبل الحفظ
         if not form.is_valid():
-            print("Form errors:", form.errors)
-            print("Form data:", form.data)
-            print("Form cleaned_data:", form.cleaned_data)
-        
+            messages.error(request, 'حدث خطأ في البيانات المدخلة. يرجى مراجعة الحقول المطلوبة.')
+            print('Form errors:', form.errors)
+            return render(request, 'orders/order_form.html', {'form': form, 'formset': formset, 'title': 'إنشاء طلب جديد'})
         if not formset.is_valid():
-            print("Formset errors:", formset.errors)
-            print("Formset data:", formset.data)
-        
-        # Force form validation to pass
-        if True:  # form.is_valid() and formset.is_valid():
+            messages.error(request, 'حدث خطأ في تفاصيل المنتجات. يرجى مراجعة البيانات.')
+            print('Formset errors:', formset.errors)
+            return render(request, 'orders/order_form.html', {'form': form, 'formset': formset, 'title': 'إنشاء طلب جديد'})
+        # إذا كان النموذج صالحاً، أكمل الحفظ
+        if form.is_valid() and formset.is_valid():
             try:
                 # Save order
                 order = form.save(commit=False)
@@ -155,48 +154,79 @@ def order_create(request):
                 
                 order.save()
                 
-                # Handle product types
-                product_types = request.POST.get('product_types_hidden', '')
-                if order_type == 'product' and product_types:
-                    product_types = [pt.strip() for pt in product_types.split(',') if pt.strip()]
+                # --- دعم طلب المعاينة فقط بدون منتجات ---
+                if order_type == 'inspection':
+                    # إنشاء سجل معاينة جديد
+                    from inspections.models import Inspection
+                    from datetime import date, timedelta
+                    inspection = Inspection.objects.create(
+                        customer=order.customer,
+                        branch=order.branch,
+                        request_date=date.today(),
+                        scheduled_date=date.today() + timedelta(days=3),
+                        status='pending',
+                        notes=f'تم إنشاء هذه المعاينة من طلب رقم {order.order_number}',
+                        created_by=request.user
+                    )
+                    # ربط الطلب بالمعاينة (لو فيه حقل مناسب)
+                    # order.inspection = inspection
+                    # order.save()
+                    # إرسال إشعار لقسم المعاينات
+                    from accounts.models import Notification, Department
+                    dept = Department.objects.filter(code='inspections').first()
+                    if dept:
+                        Notification.objects.create(
+                            title='طلب معاينة جديد',
+                            message=f'تم إنشاء طلب معاينة جديد للعميل {order.customer.name} بواسطة {request.user.username} من فرع {order.branch.name if order.branch else "-"}',
+                            department=dept,
+                            created_by=request.user
+                        )
+                    # لا داعي لإنشاء منتجات أو formset
+                else:
+                    # Handle product types
+                    product_types = request.POST.get('product_types_hidden', '')
+                    if order_type == 'product' and product_types:
+                        product_types = [pt.strip() for pt in product_types.split(',') if pt.strip()]
                     
-                # Handle product selection for product orders
-                selected_products_json = request.POST.get('selected_products', '')
-                if selected_products_json:
-                    import json
-                    try:
-                        selected_products = json.loads(selected_products_json)
-                        
-                        # Create order items for each selected product
-                        from inventory.models import Product
-                        for product_data in selected_products:
-                            try:
-                                product_id = product_data.get('id')
-                                quantity = product_data.get('quantity', 1)
-                                
-                                product = Product.objects.get(id=product_id)
-                                
-                                # Check if product type matches selected product types
-                                product_type = 'fabric' if product.category and 'قماش' in product.category.name.lower() else 'accessory'
-                                
-                                # Create order item regardless of product type
-                                OrderItem.objects.create(
-                                    order=order,
-                                    product=product,
-                                    quantity=quantity,
-                                    unit_price=product.price or 0,
-                                    item_type=product_type
-                                )
-                                print(f"Created order item for product {product.name} with quantity {quantity}")
-                            except (Product.DoesNotExist, ValueError) as e:
-                                print(f"Error processing product {product_id}: {str(e)}")
-                    except json.JSONDecodeError as e:
-                        print(f"Error decoding selected products JSON: {str(e)}")
-                        print(f"Raw JSON: {selected_products_json}")
+                    # Handle product selection for product orders
+                    selected_products_json = request.POST.get('selected_products', '')
+                    if selected_products_json:
+                        import json
+                        try:
+                            selected_products = json.loads(selected_products_json)
+                            
+                            # Create order items for each selected product
+                            from inventory.models import Product
+                            for product_data in selected_products:
+                                try:
+                                    product_id = product_data.get('id')
+                                    quantity = product_data.get('quantity', 1)
+                                    
+                                    product = Product.objects.get(id=product_id)
+                                    
+                                    # Check if product type matches selected product types
+                                    product_type = 'fabric' if product.category and 'قماش' in product.category.name.lower() else 'accessory'
+                                    
+                                    # Create order item regardless of product type
+                                    OrderItem.objects.create(
+                                        order=order,
+                                        product=product,
+                                        quantity=quantity,
+                                        unit_price=product.price or 0,
+                                        item_type=product_type
+                                    )
+                                    print(f"Created order item for product {product.name} with quantity {quantity}")
+                                except (Product.DoesNotExist, ValueError) as e:
+                                    print(f"Error processing product {product_id}: {str(e)}")
+                        except json.JSONDecodeError as e:
+                            print(f"Error decoding selected products JSON: {str(e)}")
+                            print(f"Raw JSON: {selected_products_json}")
+                    
+                    # Save order items from formset (if any)
+                    formset.instance = order
+                    formset.save()
                 
-                # Save order items from formset (if any)
-                formset.instance = order
-                formset.save()
+                # --- نهاية دعم طلب المعاينة فقط ---
                 
                 # Calculate total amount
                 total_amount = sum(item.quantity * item.unit_price for item in order.items.all())

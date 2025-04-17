@@ -132,11 +132,12 @@
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-3">
-                        {% if log.file_name.endswith('.xlsx') %}
+                        {% load data_import_export.templatetags.custom_filters %}
+{% if log.file_name|endswith:'.xlsx' %}
                             <i class="fas fa-file-excel fa-5x text-success"></i>
-                        {% elif log.file_name.endswith('.csv') %}
+                        {% elif log.file_name|endswith:'.csv' %}
                             <i class="fas fa-file-csv fa-5x text-primary"></i>
-                        {% elif log.file_name.endswith('.json') %}
+                        {% elif log.file_name|endswith:'.json' %}
                             <i class="fas fa-file-code fa-5x text-warning"></i>
                         {% else %}
                             <i class="fas fa-file fa-5x text-secondary"></i>

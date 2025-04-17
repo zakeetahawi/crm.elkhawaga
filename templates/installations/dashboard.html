@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
+<<<<<<< HEAD
 {% block title %}لوحة تحكم التركيبات{% endblock %}
+=======
+{% block title %}{% trans "لوحة تحكم التركيبات - احترافية" %}{% endblock %}
+>>>>>>> d64d672 (إصلاح مشاكل تفاصيل المنتجات في نموذج الطلب، وضمان إرسال الحقول الخفية الخاصة بالـ formset، وإظهار أخطاء formset بشكل واضح للمستخدم)
 
 {% block content %}
 <div class="container-fluid">
@@ -19,6 +23,33 @@
     </div>
 
     <!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white mb-3">
+            <div class="card-body">
+                <h6 class="card-title">التركيبات مع النقل المجدول</h6>
+                <h2 class="mb-0">{{ installations_with_transport }}</h2>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <span>تركيب + نقل</span>
+                <i class="fas fa-shipping-fast"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white mb-3">
+            <div class="card-body">
+                <h6 class="card-title">طلبات النقل فقط (منفصلة)</h6>
+                <h2 class="mb-0">{{ separate_transport_requests }}</h2>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <span>النقل فقط</span>
+                <i class="fas fa-truck"></i>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /Custom Stats -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">

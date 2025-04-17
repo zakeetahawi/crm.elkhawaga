@@ -99,11 +99,36 @@ class Order(models.Model):
             # Generate new order number
             self.order_number = f"{self.customer.code}-{next_num:04d}"
         
-        # Make invoice_number required for services
-        if self.order_type == 'service' and not self.invoice_number:
-            raise models.ValidationError('رقم الفاتورة مطلوب لطلبات الخدمات')
-            
+        # Debug: اطبع القيم للتشخيص
+        print(f"[Order.save] order_type: {self.order_type}, service_types: {self.service_types}")
+
+        # تأكد أن service_types دائماً قائمة
+        service_types = self.service_types
+        if service_types is None:
+            service_types = []
+        elif isinstance(service_types, str):
+            import json
+            try:
+                loaded = json.loads(service_types)
+                if isinstance(loaded, list):
+                    service_types = loaded
+                else:
+                    service_types = [str(loaded)]
+            except Exception:
+                # إذا كانت سلسلة مفصولة بفواصل
+                service_types = [st.strip() for st in service_types.split(',') if st.strip()]
+        elif not isinstance(service_types, list):
+            service_types = [str(service_types)]
+        # الآن service_types قائمة حقيقية دائماً
+        self.service_types = service_types
+
+        # رقم الفاتورة مطلوب فقط إذا كانت الخدمة ليست معاينة فقط
+        if self.order_type == 'service':
+            if not (len(service_types) == 1 and service_types[0] == 'inspection'):
+                if not self.invoice_number:
+                    raise models.ValidationError('رقم الفاتورة مطلوب لطلبات الخدمات')
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f'{self.order_number} - {self.customer.name}'

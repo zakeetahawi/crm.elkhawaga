@@ -13,10 +13,16 @@
     </div>
 
     <form method="post" id="orderForm" novalidate>
+    {{ formset.management_form }}
+    <div style="display:none;">
+        {% for form in formset %}
+            {{ form.as_p }}
+        {% endfor %}
+    </div>
         {% csrf_token %}
         
         <!-- Display form errors -->
-        {% if form.errors %}
+        {% if form.errors or formset.errors %}
             <div class="alert alert-danger mb-4">
                 <h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> يوجد أخطاء في النموذج</h5>
                 {% if form.non_field_errors %}
@@ -27,6 +33,20 @@
                     </ul>
                 {% else %}
                     <p class="mb-0">يرجى التحقق من الحقول المطلوبة أدناه.</p>
+                {% endif %}
+                {% if formset.errors %}
+                    <ul class="mb-0">
+                    {% for error in formset.non_form_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                    {% for f in formset.forms %}
+                        {% for field in f.visible_fields %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
                 {% endif %}
             </div>
         {% endif %}
