@@ -35,18 +35,21 @@
   runtime = "python3.9"
   memory = 1024
   timeout = 30
-  [functions.django.environment]
-    PYTHONPATH = "/var/task"
-    DJANGO_SETTINGS_MODULE = "crm.settings"
+
+[functions.health]
+  runtime = "python3.9"
+  memory = 256
+  timeout = 10
 
 [dev]
   framework = "#static"
   targetPort = 8000
 
 [[redirects]]
-  from = "/static/*"
-  to = "/static/:splat"
+  from = "/health"
+  to = "/.netlify/functions/health"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/*"
