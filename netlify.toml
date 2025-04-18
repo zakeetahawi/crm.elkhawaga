@@ -1,6 +1,9 @@
 [build]
   base = "./"
-  command = "chmod +x build.sh && ./build.sh"
+  command = """
+    chmod +x build.sh && ./build.sh
+    cd netlify/functions && pip install -r requirements.txt
+  """
   publish = "staticfiles"
   functions = "netlify/functions"
 
@@ -11,6 +14,7 @@
   DEBUG = "0"
 
 [functions]
+  node_bundler = "esbuild"
   external_node_modules = []
   included_files = ["crm/**/*", "templates/**/*", "staticfiles/**/*"]
 
