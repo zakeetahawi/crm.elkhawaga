@@ -1,17 +1,15 @@
 #!/bin/bash
-
-# Exit on error
 set -e
 
-echo "Installing pip..."
-python -m pip install --upgrade pip
+echo "Python version:"
+python --version
 
 echo "Installing dependencies..."
+pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "Creating directories..."
-mkdir -p staticfiles
-mkdir -p media
+echo "Setting up directories..."
+mkdir -p staticfiles media
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
