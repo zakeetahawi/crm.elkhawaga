@@ -1,16 +1,16 @@
 [build]
-  base = "/"
+  base = "./"
   command = "chmod +x build.sh && ./build.sh"
   publish = "staticfiles"
 
 [build.environment]
   PYTHON_VERSION = "3.11.0"
-  NODE_VERSION = "18.17.0"  # More specific Node version
+  NODE_VERSION = "18.17.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
+  PYTHONPATH = "."
 
 [context.production.environment]
   DEBUG = "0"
-  PYTHONPATH = "."
 
 [context.deploy-preview]
   command = """
