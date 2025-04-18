@@ -12,6 +12,8 @@
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
+  DJANGO_CONFIGURATION = "Production"
+  PYTHON_RUNTIME = "python3.9"
 
 [[plugins]]
   package = "@netlify/plugin-python"
@@ -27,12 +29,19 @@
     "staticfiles/**/*",
     "netlify/functions/**/*"
   ]
-  node_bundler = "esbuild"
+  external_node_modules = []
 
 [functions.django]
   runtime = "python3.9"
   memory = 1024
-  timeout = 10
+  timeout = 30
+  [functions.django.environment]
+    PYTHONPATH = "/var/task"
+    DJANGO_SETTINGS_MODULE = "crm.settings"
+
+[dev]
+  framework = "#static"
+  targetPort = 8000
 
 [[redirects]]
   from = "/static/*"
@@ -58,3 +67,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
