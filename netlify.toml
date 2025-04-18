@@ -1,30 +1,41 @@
 [build]
   base = "./"
   command = """
-    mkdir -p /opt/build/cache
-    curl -sSL https://install.python-poetry.org | python3 -
-    apt-get update && apt-get install -y python3.9 python3.9-dev python3-pip build-essential
-    python3.9 -m pip install --upgrade pip
+    python3 -m pip install --upgrade pip
     pip install -r requirements.txt
-    python3.9 manage.py collectstatic --noinput
-    python3.9 manage.py migrate --noinput
+    python3 manage.py collectstatic --noinput
+    python3 manage.py migrate --noinput
   """
   publish = "staticfiles"
 
 [build.environment]
-  NODE_VERSION = "18.17.0"
   PYTHON_VERSION = "3.9"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
   SECRET_KEY = "${SECRET_KEY}"
-  NETLIFY_SITE_NAME = "crm-elkhawaga"
 
-[context.production.environment]
-  DEBUG = "0"
+[build.processing]
+  skip_processing = true
+
+[build.processing.css]
+  bundle = false
+  minify = false
+
+[build.processing.js]
+  bundle = false
+  minify = false
+
+[build.processing.html]
+  pretty_urls = false
+
+[build.processing.images]
+  compress = false
 
 [[plugins]]
   package = "@netlify/plugin-python"
+  [plugins.inputs]
+    pythonVersion = "3.9"
 
 [[redirects]]
   from = "/api/*"
@@ -37,7 +48,7 @@
   status = 200
 
 [[redirects]]
-  from = "/media/*" 
+  from = "/media/*"
   to = "/media/:splat"
   status = 200
 
