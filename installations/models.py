@@ -16,6 +16,15 @@ class Installation(models.Model):
         ('completed', _('مكتمل')),
         ('cancelled', _('ملغي')),
     ]
+    team_leader = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lead_installations',
+        verbose_name=_('قائد الفريق')
+    )
+
     
     order = models.ForeignKey(
         Order, 
@@ -111,6 +120,15 @@ class TransportRequest(models.Model):
         ('completed', _('مكتمل')),
         ('cancelled', _('ملغي')),
     ]
+    team_leader = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lead_transports',
+        verbose_name=_('قائد الفريق')
+    )
+
     
     installation = models.ForeignKey(
         Installation,

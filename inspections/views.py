@@ -41,9 +41,19 @@ class InspectionListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Inspection.objects.all()
-        return Inspection.objects.filter(inspector=self.request.user)
+        from datetime import timedelta
+        from django.utils import timezone
+        # إذا كان سوبر يوزر يعرض كل العناصر، وإلا يعرض العناصر الخاصة به
+        queryset = Inspection.objects.all() if self.request.user.is_superuser else Inspection.objects.filter(inspector=self.request.user)
+        overdue = self.request.GET.get('overdue')
+        status = self.request.GET.get('status')
+        if overdue == '1':
+            now = timezone.now()
+            overdue_time = now - timedelta(hours=24)
+            queryset = queryset.filter(status='pending', scheduled_date__isnull=True, request_date__lt=overdue_time.date())
+        elif status:
+            queryset = queryset.filter(status=status)
+        return queryset
 
 class InspectionCreateView(LoginRequiredMixin, CreateView):
     model = Inspection

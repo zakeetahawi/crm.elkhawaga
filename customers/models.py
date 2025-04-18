@@ -84,7 +84,9 @@ class Customer(models.Model):
         Branch,
         on_delete=models.PROTECT,
         related_name='customers',
-        verbose_name=_('الفرع')
+        verbose_name=_('الفرع'),
+        null=True,
+        blank=True
     )
     phone = models.CharField(_('رقم الهاتف'), max_length=20)
     email = models.EmailField(_('البريد الإلكتروني'), blank=True)

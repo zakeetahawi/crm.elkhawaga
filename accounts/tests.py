@@ -22,14 +22,14 @@ class LoginLogoutViewTest(TestCase):
         self.client = Client()
 
     def test_login_view_success(self):
-        response = self.client.post(reverse('login'), {'username': 'testuser', 'password': 'testpass123'})
+        response = self.client.post(reverse('accounts:login'), {'username': 'testuser', 'password': 'testpass123'})
         self.assertEqual(response.status_code, 302)  # Redirect after login
 
     def test_login_view_fail(self):
-        response = self.client.post(reverse('login'), {'username': 'wrong', 'password': 'wrong'})
+        response = self.client.post(reverse('accounts:login'), {'username': 'wrong', 'password': 'wrong'})
         self.assertContains(response, 'اسم المستخدم أو كلمة المرور غير صحيحة', status_code=200)
 
     def test_logout_view(self):
         self.client.login(username='testuser', password='testpass123')
-        response = self.client.get(reverse('logout'))
+        response = self.client.get(reverse('accounts:logout'))
         self.assertEqual(response.status_code, 302)  # Redirect after logout

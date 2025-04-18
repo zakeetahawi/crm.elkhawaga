@@ -3,6 +3,18 @@ from django.conf import settings
 from customers.models import Customer
 from inventory.models import Product
 
+class Salesperson(models.Model):
+    name = models.CharField(max_length=100, verbose_name='اسم البائع')
+    branch = models.ForeignKey('accounts.Branch', on_delete=models.CASCADE, related_name='salespersons', verbose_name='الفرع')
+    
+    class Meta:
+        verbose_name = 'بائع'
+        verbose_name_plural = 'البائعون'
+        unique_together = ('name', 'branch')
+    
+    def __str__(self):
+        return f'{self.name} - {self.branch}'
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('normal', 'عادي'),
@@ -42,12 +54,13 @@ class Order(models.Model):
     ]
 
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer_orders', verbose_name='العميل')
+    salesperson = models.ForeignKey('Salesperson', on_delete=models.PROTECT, related_name='orders', verbose_name='البائع', null=True, blank=True)
     delivery_type = models.CharField(max_length=10, choices=DELIVERY_TYPE_CHOICES, default='branch', verbose_name='نوع التسليم')
     delivery_address = models.TextField(blank=True, null=True, verbose_name='عنوان التسليم')
     order_number = models.CharField(max_length=50, unique=True, verbose_name='رقم الطلب')
     order_date = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الطلب')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='normal', verbose_name='حالة الطلب')
-    
+
     # Order type fields
     order_type = models.CharField(
         max_length=10,
@@ -65,7 +78,6 @@ class Order(models.Model):
     invoice_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='رقم الفاتورة')
     contract_number = models.CharField(max_length=50, null=True, blank=True, verbose_name='رقم العقد')
     payment_verified = models.BooleanField(default=False, verbose_name='تم التحقق من السداد')
-    
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ الإجمالي')
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='المبلغ المدفوع')
     notes = models.TextField(blank=True, verbose_name='ملاحظات')

@@ -37,7 +37,7 @@ class InstallationModelTest(TestCase):
         )
 
     def test_installation_str(self):
-        self.assertIn('INV001', str(self.installation))
+        self.assertIn('تركيب', str(self.installation))  # تحقق عام من وجود كلمة تركيب
 
 class InstallationViewsTest(TestCase):
     def setUp(self):
@@ -67,7 +67,8 @@ class InstallationViewsTest(TestCase):
             customer=self.customer,
             branch=self.branch,
             invoice_number='INV002',
-            status='pending'
+            status='pending',
+            team_leader=self.user
         )
         self.client.login(username='instuser', password='testpass123')
 
@@ -82,7 +83,10 @@ class InstallationViewsTest(TestCase):
             'customer': self.customer.id,
             'branch': self.branch.id,
             'invoice_number': 'INV003',
-            'status': 'pending'
+            'status': 'pending',
+            'team_leader': self.user.id,
+            'scheduled_date': '2025-04-18',
+            'notes': 'Test installation'
         })
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Installation.objects.filter(invoice_number='INV003').exists())

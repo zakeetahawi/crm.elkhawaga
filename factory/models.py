@@ -4,10 +4,12 @@ from accounts.models import User
 from orders.models import Order
 
 class ProductionLine(models.Model):
+    class Meta:
+        ordering = ['id']  # ترتيب افتراضي لتفادي تحذير الباجنيشن
     """
     Model for different production lines in the factory
     """
-    name = models.CharField(_('اسم خط الإنتاج'), max_length=100)
+    name = models.CharField(_('اسم خط الإنتاج'), max_length=100, unique=True)
     description = models.TextField(_('الوصف'), blank=True)
     is_active = models.BooleanField(_('نشط'), default=True)
     

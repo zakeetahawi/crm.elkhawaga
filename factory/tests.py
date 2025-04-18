@@ -20,8 +20,19 @@ class ProductionOrderModelTest(TestCase):
         self.User = get_user_model()
         self.user = self.User.objects.create_user(username='produser', password='testpass123')
         self.line = ProductionLine.objects.create(name='خط 2')
+        from customers.models import Customer, CustomerCategory
+        self.category = CustomerCategory.objects.create(name='VIP')
+        self.customer = Customer.objects.create(
+            name='عميل إنتاج',
+            code='CUST500',
+            phone='01000009999',
+            email='prod@example.com',
+            customer_type='retail',
+            status='active',
+            category=self.category
+        )
         self.order = Order.objects.create(
-            customer_id=1,
+            customer=self.customer,
             delivery_type='branch',
             order_number='ORDP001',
             status='normal',

@@ -53,11 +53,13 @@ class InstallationListView(LoginRequiredMixin, ListView):
 class InstallationCreateView(LoginRequiredMixin, CreateView):
     model = Installation
     template_name = 'installations/installation_form.html'
-    fields = ['customer', 'scheduled_date', 'address', 'notes', 'team_members']
+    fields = ['order', 'customer', 'branch', 'invoice_number', 'status', 'scheduled_date', 'notes']
     success_url = reverse_lazy('installations:dashboard')
 
     def form_valid(self, form):
         form.instance.team_leader = self.request.user
+        if not form.instance.branch and hasattr(self.request.user, 'branch') and self.request.user.branch:
+            form.instance.branch = self.request.user.branch
         messages.success(self.request, 'تم إنشاء طلب التركيب بنجاح')
         return super().form_valid(form)
 
@@ -69,7 +71,7 @@ class InstallationDetailView(LoginRequiredMixin, DetailView):
 class InstallationUpdateView(LoginRequiredMixin, UpdateView):
     model = Installation
     template_name = 'installations/installation_form.html'
-    fields = ['customer', 'scheduled_date', 'address', 'notes', 'status', 'team_members']
+    fields = ['order', 'customer', 'scheduled_date', 'notes', 'status']
     success_url = reverse_lazy('installations:dashboard')
 
     def form_valid(self, form):

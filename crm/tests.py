@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from customers.models import Customer
 from orders.models import Order
 from factory.models import ProductionOrder
-from inventory.models import Product
+from inventory.models import Product, Category
 
 class HomeViewTest(TestCase):
     def setUp(self):
@@ -34,10 +34,11 @@ class HomeViewTest(TestCase):
             status='pending',
             created_by=self.user
         )
+        self.category = Category.objects.create(name='فئة افتراضية')
         self.product = Product.objects.create(
             name='منتج لوحة المعلومات',
             code='PRDDASH1',
-            category_id=1,
+            category=self.category,
             unit='piece',
             price=100
         )
