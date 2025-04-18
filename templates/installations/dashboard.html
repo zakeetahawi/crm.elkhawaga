@@ -1,11 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
-<<<<<<< HEAD
-{% block title %}لوحة تحكم التركيبات{% endblock %}
-=======
 {% block title %}{% trans "لوحة تحكم التركيبات - احترافية" %}{% endblock %}
->>>>>>> d64d672 (إصلاح مشاكل تفاصيل المنتجات في نموذج الطلب، وضمان إرسال الحقول الخفية الخاصة بالـ formset، وإظهار أخطاء formset بشكل واضح للمستخدم)
 
 {% block content %}
 <div class="container-fluid">
@@ -212,21 +209,23 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: ['جديدة', 'مكتملة', 'قيد التنفيذ', 'متأخرة'],
             datasets: [{
                 data: [
-                    {{ new_installations_count }},
-                    {{ completed_installations_count }},
-                    {{ in_progress_installations_count }},
-                    {{ overdue_installations_count }}
+                    {{ new_installations_count|add:0 }},
+                    {{ completed_installations_count|add:0 }},
+                    {{ in_progress_installations_count|add:0 }},
+                    {{ overdue_installations_count|add:0 }}
                 ],
                 backgroundColor: [
-                    '#0d6efd',  // Primary
-                    '#198754',  // Success
-                    '#0dcaf0',  // Info
-                    '#dc3545'   // Danger
+                    '#0d6efd',
+                    '#198754',
+                    '#0dcaf0',
+                    '#dc3545'
                 ]
             }]
         },
         options: {
-            responsive: true,
+            responsive: true
+        }
+    });
             maintainAspectRatio: false
         }
     });

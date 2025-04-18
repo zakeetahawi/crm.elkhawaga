@@ -1,9 +1,11 @@
 from django.urls import path
 from . import views
+from .views import FactoryDashboardView
 
 app_name = 'factory'
 
 urlpatterns = [
+    path('dashboard/', FactoryDashboardView.as_view(), name='dashboard'),
     # Dashboard
     path('', views.factory_list, name='factory_list'),
     

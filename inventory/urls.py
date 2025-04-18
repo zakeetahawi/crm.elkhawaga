@@ -1,11 +1,13 @@
 from django.urls import path
 from . import views
+from .views import InventoryDashboardView
 
 app_name = 'inventory'
 
 urlpatterns = [
+    path('dashboard/', InventoryDashboardView.as_view(), name='dashboard'),
     # Dashboard
-    path('', views.inventory_list, name='inventory_list'),
+    path('', views.product_list, name='product_list'),
     
     # Products
     path('product/<int:pk>/', views.product_detail, name='product_detail'),

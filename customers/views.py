@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -305,3 +307,20 @@ def get_customer_details(request, pk):
     }
     
     return JsonResponse(customer_data)
+
+
+class CustomerDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'customers/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_superuser:
+            customers = Customer.objects.all()
+        else:
+            customers = Customer.objects.filter(branch=user.branch) if hasattr(user, 'branch') else Customer.objects.none()
+        context['total_customers'] = customers.count()
+        context['active_customers'] = customers.filter(status='active').count()
+        context['inactive_customers'] = customers.filter(status='inactive').count()
+        context['recent_customers'] = customers.order_by('-created_at')[:10]
+        return context

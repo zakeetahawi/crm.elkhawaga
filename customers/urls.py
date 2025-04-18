@@ -1,10 +1,12 @@
 from django.urls import path
 from . import views
+from .views import CustomerDashboardView
 
 app_name = 'customers'
 
 
 urlpatterns = [
+    path('dashboard/', CustomerDashboardView.as_view(), name='dashboard'),
     # Customer Views
     path('', views.customer_list, name='customer_list'),
     path('<int:pk>/', views.customer_detail, name='customer_detail'),

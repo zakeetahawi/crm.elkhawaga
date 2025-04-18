@@ -554,3 +554,18 @@ def production_issue_detail(request, pk):
     }
     
     return render(request, 'factory/production_issue_detail.html', context)
+
+
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class FactoryDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'factory/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_lines'] = ProductionLine.objects.count()
+        context['total_orders'] = ProductionOrder.objects.count()
+        context['pending_orders'] = ProductionOrder.objects.filter(status='pending').count()
+        context['recent_orders'] = ProductionOrder.objects.order_by('-created_at')[:10]
+        return context

@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils import timezone
 from .models import Inspection, InspectionReport, InspectionNotification, InspectionEvaluation
-from .forms import InspectionForm, ReportForm, NotificationForm, EvaluationForm
+from .forms import InspectionForm, InspectionReportForm, InspectionNotificationForm, InspectionEvaluationForm
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'inspections/dashboard.html'
@@ -26,7 +26,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['in_progress_inspections_count'] = inspections.filter(status='in_progress').count()
         context['overdue_inspections_count'] = inspections.filter(
             status__in=['new', 'in_progress'],
-            date__lt=today
+            scheduled_date__lt=today
         ).count()
         
         # Get recent inspections
@@ -92,7 +92,7 @@ class InspectionDeleteView(LoginRequiredMixin, DeleteView):
 
 class EvaluationCreateView(LoginRequiredMixin, CreateView):
     model = InspectionEvaluation
-    form_class = EvaluationForm
+    form_class = InspectionEvaluationForm
     template_name = 'inspections/evaluation_form.html'
 
     def form_valid(self, form):
@@ -118,7 +118,7 @@ class NotificationListView(LoginRequiredMixin, ListView):
 
 class NotificationCreateView(LoginRequiredMixin, CreateView):
     model = InspectionNotification
-    form_class = NotificationForm
+    form_class = InspectionNotificationForm
     template_name = 'inspections/notification_form.html'
 
     def form_valid(self, form):

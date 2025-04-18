@@ -18,6 +18,7 @@
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
+            <a href="{% url 'inspections:inspection_list' %}?status=new" style="text-decoration: none;">
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -29,8 +30,10 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
         <div class="col-md-3">
+            <a href="{% url 'inspections:inspection_list' %}?status=completed" style="text-decoration: none;">
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -42,8 +45,10 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
         <div class="col-md-3">
+            <a href="{% url 'inspections:inspection_list' %}?status=in_progress" style="text-decoration: none;">
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -55,8 +60,10 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
         <div class="col-md-3">
+            <a href="{% url 'inspections:inspection_list' %}?overdue=1" style="text-decoration: none;">
             <div class="card bg-danger text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -68,6 +75,7 @@
                     </div>
                 </div>
             </div>
+            </a>
         </div>
     </div>
 
@@ -151,16 +159,16 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: ['جديدة', 'مكتملة', 'قيد المعاينة', 'متأخرة'],
             datasets: [{
                 data: [
-                    {{ new_inspections_count }},
-                    {{ completed_inspections_count }},
-                    {{ in_progress_inspections_count }},
-                    {{ overdue_inspections_count }}
+                    {{ new_inspections_count|add:0 }},
+                    {{ completed_inspections_count|add:0 }},
+                    {{ in_progress_inspections_count|add:0 }},
+                    {{ overdue_inspections_count|add:0 }}
                 ],
                 backgroundColor: [
-                    '#0d6efd',  // Primary
-                    '#198754',  // Success
-                    '#ffc107',  // Warning
-                    '#dc3545'   // Danger
+                    '#0d6efd',
+                    '#198754',
+                    '#ffc107',
+                    '#dc3545'
                 ]
             }]
         },
