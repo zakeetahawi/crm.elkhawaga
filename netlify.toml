@@ -1,43 +1,30 @@
 [build]
   base = "./"
   command = """
-    curl https://pyenv.run | bash
-    export PATH="$HOME/.pyenv/bin:$PATH"
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
-    pyenv install 3.7.13
-    pyenv global 3.7.13
-    chmod +x build.sh
-    ./build.sh
+    mkdir -p /opt/build/cache
+    curl -sSL https://install.python-poetry.org | python3 -
+    apt-get update && apt-get install -y python3.9 python3.9-dev python3-pip build-essential
+    python3.9 -m pip install --upgrade pip
+    pip install -r requirements.txt
+    python3.9 manage.py collectstatic --noinput
+    python3.9 manage.py migrate --noinput
   """
   publish = "staticfiles"
 
 [build.environment]
   NODE_VERSION = "18.17.0"
+  PYTHON_VERSION = "3.9"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
-  SECRET_KEY = "django-insecure-k9l7v5#ar90z@s3kj&z8_5y2p7l5x3=k9l7v5#ar90z@s3kj"
+  SECRET_KEY = "${SECRET_KEY}"
   NETLIFY_SITE_NAME = "crm-elkhawaga"
-  PATH = "$HOME/.pyenv/bin:$PATH"
 
 [context.production.environment]
   DEBUG = "0"
-  DJANGO_SETTINGS_MODULE = "crm.settings"
 
-[context.deploy-preview]
-  command = """
-    curl https://pyenv.run | bash
-    export PATH="$HOME/.pyenv/bin:$PATH"
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
-    pyenv install 3.7.13
-    pyenv global 3.7.13
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    python manage.py collectstatic --noinput
-    python manage.py migrate --noinput
-  """
+[[plugins]]
+  package = "@netlify/plugin-python"
 
 [[redirects]]
   from = "/api/*"
@@ -50,7 +37,7 @@
   status = 200
 
 [[redirects]]
-  from = "/media/*"
+  from = "/media/*" 
   to = "/media/:splat"
   status = 200
 
@@ -75,10 +62,3 @@
       font-src 'self' https://cdn.jsdelivr.net;
     """
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-
-[dev]
-  framework = "#custom"
-  command = "python manage.py runserver"
-  port = 8000
-  targetPort = 8000
-  publish = "staticfiles"
