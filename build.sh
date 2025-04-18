@@ -9,13 +9,9 @@ python --version
 # Upgrade pip
 python -m pip install --upgrade pip
 
-# Install Python and dependencies
+# Install dependencies
 echo "Installing dependencies..."
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-# Install additional required packages
-pip install pillow pandas numpy openpyxl xlrd gunicorn whitenoise
 
 # Create necessary directories
 echo "Creating necessary directories..."
@@ -29,5 +25,10 @@ python manage.py collectstatic --noinput
 # Apply database migrations
 echo "Applying database migrations..."
 python manage.py migrate --noinput
+
+# Create initial superuser if needed (commented out for security)
+# if [[ -n "${DJANGO_SUPERUSER_USERNAME}" ]]; then
+#     python manage.py createsuperuser --noinput || true
+# fi
 
 echo "Build completed successfully!"
