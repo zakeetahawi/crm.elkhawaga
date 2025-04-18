@@ -6,7 +6,6 @@
   """
   publish = "staticfiles"
   functions = "netlify/functions"
-  ignore = "git diff --quiet HEAD^ HEAD netlify/"
 
 [build.environment]
   PYTHON_VERSION = "3.9"
@@ -14,20 +13,31 @@
   PYTHONPATH = "."
   DEBUG = "0"
 
+[[plugins]]
+  package = "@netlify/plugin-python"
+  [plugins.inputs]
+    pythonVersion = "3.9"
+    requirementsPath = "./netlify/functions/requirements.txt"
+
 [functions]
   directory = "netlify/functions"
-  node_bundler = "esbuild"
   included_files = [
     "crm/**/*",
     "templates/**/*",
     "staticfiles/**/*",
-    "netlify/functions/requirements.txt",
-    "netlify/functions/runtime.txt"
+    "netlify/functions/**/*"
   ]
+  node_bundler = "esbuild"
 
 [functions.django]
-  external_node_modules = []
-  included_files = ["**/*"]
+  runtime = "python3.9"
+  memory = 1024
+  timeout = 10
+
+[[redirects]]
+  from = "/static/*"
+  to = "/static/:splat"
+  status = 200
 
 [[redirects]]
   from = "/api/*"

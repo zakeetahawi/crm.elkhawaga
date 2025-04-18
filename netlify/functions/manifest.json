@@ -1,0 +1,11 @@
+{
+  "functions": [
+    {
+      "name": "django",
+      "path": "django.py",
+      "runtime": "python3.9",
+      "memory": 1024,
+      "timeout": 10
+    }
+  ]
+}
