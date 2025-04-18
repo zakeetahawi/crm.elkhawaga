@@ -4,13 +4,17 @@
   publish = "staticfiles"
 
 [build.environment]
-  PYTHON_VERSION = "3.9.13"
+  PYTHON_VERSION = "3.8.12"
   NODE_VERSION = "18.17.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
   SECRET_KEY = "django-insecure-k9l7v5#ar90z@s3kj&z8_5y2p7l5x3=k9l7v5#ar90z@s3kj"
   NETLIFY_SITE_NAME = "crm-elkhawaga"
+  PYTHON_RUNTIME = "3.8.12"
+  PYTHON_COMPILE = "false"
+  MISE_PYTHON_COMPILE = "false"
+  POETRY_VIRTUALENVS_CREATE = "false"
 
 [context.production.environment]
   DEBUG = "0"
@@ -18,14 +22,16 @@
 
 [context.deploy-preview]
   command = """
-    python -m pip install -r requirements.txt &&
+    python -m pip install --upgrade pip &&
+    pip install -r requirements.txt &&
     python manage.py collectstatic --noinput &&
     python manage.py migrate --noinput
   """
 
 [context.branch-deploy]
   command = """
-    python -m pip install -r requirements.txt &&
+    python -m pip install --upgrade pip &&
+    pip install -r requirements.txt &&
     python manage.py collectstatic --noinput &&
     python manage.py migrate --noinput
   """
