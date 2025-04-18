@@ -8,26 +8,27 @@
   NODE_VERSION = "18.17.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
+  DEBUG = "0"
+  SECRET_KEY = "django-insecure-k9l7v5#ar90z@s3kj&z8_5y2p7l5x3=k9l7v5#ar90z@s3kj"
+  NETLIFY_SITE_NAME = "crm-elkhawaga"
 
 [context.production.environment]
   DEBUG = "0"
+  DJANGO_SETTINGS_MODULE = "crm.settings"
 
 [context.deploy-preview]
   command = """
     python -m pip install -r requirements.txt &&
-    python manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput &&
+    python manage.py migrate --noinput
   """
 
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-[dev]
-  framework = "#custom"
-  command = "python manage.py runserver"
-  port = 8000
-  targetPort = 8000
-  publish = "staticfiles"
+[context.branch-deploy]
+  command = """
+    python -m pip install -r requirements.txt &&
+    python manage.py collectstatic --noinput &&
+    python manage.py migrate --noinput
+  """
 
 [[redirects]]
   from = "/api/*"
@@ -35,10 +36,20 @@
   status = 200
 
 [[redirects]]
+  from = "/static/*"
+  to = "/static/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/media/*"
+  to = "/media/:splat"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = true
+  force = false
 
 [[headers]]
   for = "/*"
@@ -47,5 +58,18 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
+      style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+      img-src 'self' data: https:;
+      font-src 'self' https://cdn.jsdelivr.net;
+    """
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[dev]
+  framework = "#custom"
+  command = "python manage.py runserver"
+  port = 8000
+  targetPort = 8000
+  publish = "staticfiles"

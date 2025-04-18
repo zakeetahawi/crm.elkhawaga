@@ -1,14 +1,19 @@
 import os
 from pathlib import Path
+import secrets
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_urlsafe(50))
 
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '1') == '1'
 
 ALLOWED_HOSTS = ['*']
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -88,6 +93,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Internationalization
 LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Africa/Cairo'
 USE_I18N = True
@@ -125,11 +131,28 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
 
+# Security Settings for Production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+
 # CORS settings
-CORS_ALLOWED_ORIGINS = ['http://localhost', 'https://*']
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost',
+    'https://localhost',
+    f'https://{os.environ.get("NETLIFY_SITE_NAME")}.netlify.app' if os.environ.get("NETLIFY_SITE_NAME") else None,
+]
+CORS_ALLOWED_ORIGINS = [origin for origin in CORS_ALLOWED_ORIGINS if origin is not None]
+
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ['http://localhost', 'https://*']
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
