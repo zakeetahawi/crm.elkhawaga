@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from customers.models import Customer
 from accounts.models import User, Branch
 
@@ -132,6 +133,13 @@ class Inspection(models.Model):
         null=True,
         blank=True
     )
+    inspector = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='assigned_inspections',
+        verbose_name=_('المعاين')
+    )
     request_date = models.DateField(_('تاريخ طلب المعاينة'))
     scheduled_date = models.DateField(_('تاريخ تنفيذ المعاينة'))
     status = models.CharField(
@@ -157,6 +165,7 @@ class Inspection(models.Model):
     )
     created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
     updated_at = models.DateTimeField(_('تاريخ التحديث'), auto_now=True)
+    completed_at = models.DateTimeField(_('تاريخ الإكتمال'), null=True, blank=True)
 
     class Meta:
         verbose_name = _('معاينة')
@@ -181,7 +190,22 @@ class Inspection(models.Model):
     def save(self, *args, **kwargs):
         if not self.branch and self.created_by:
             self.branch = self.created_by.branch
+            
+        # Set completed_at when status changes to completed
+        if self.status == 'completed' and not self.completed_at:
+            self.completed_at = timezone.now()
+        elif self.status != 'completed':
+            self.completed_at = None
+            
         super().save(*args, **kwargs)
+
+    def get_status_color(self):
+        status_colors = {
+            'pending': 'warning',
+            'completed': 'success',
+            'cancelled': 'danger'
+        }
+        return status_colors.get(self.status, 'secondary')
 
     @property
     def is_pending(self):
@@ -198,3 +222,7 @@ class Inspection(models.Model):
     @property
     def is_successful(self):
         return self.result == 'passed'
+
+    @property
+    def is_overdue(self):
+        return self.status == 'pending' and self.scheduled_date < timezone.now().date()

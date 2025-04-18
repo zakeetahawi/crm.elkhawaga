@@ -36,16 +36,33 @@
                         </div>
                         {% endif %}
 
-                        <div class="form-group mb-3">
-                            <label for="{{ form.customer.id_for_label }}" class="form-label">{% trans 'العميل' %}</label>
-                            {% render_field form.customer class="form-control select2" id="customer-select" %}
-                            {% if form.customer.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.customer.errors %}
-                                    {{ error }}
-                                {% endfor %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.customer.id_for_label }}" class="form-label">{% trans 'العميل' %}</label>
+                                    {% render_field form.customer class="form-control select2" id="customer-select" %}
+                                    {% if form.customer.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.customer.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% endif %}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.inspector.id_for_label }}" class="form-label">{% trans 'المعاين' %}</label>
+                                    {% render_field form.inspector class="form-control select2" %}
+                                    {% if form.inspector.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.inspector.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-group mb-3" id="customer-address-container" style="display: none;">
@@ -102,7 +119,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
+                                <div class="form-group" id="result-group">
                                     <label for="{{ form.result.id_for_label }}" class="form-label">{% trans 'النتيجة' %}</label>
                                     {% render_field form.result class="form-control" %}
                                     {% if form.result.errors %}
@@ -115,6 +132,22 @@
                                 </div>
                             </div>
                         </div>
+
+                        {% if not user.is_superuser %}
+                            {{ form.branch.as_hidden }}
+                        {% else %}
+                        <div class="form-group mb-3">
+                            <label for="{{ form.branch.id_for_label }}" class="form-label">{% trans 'الفرع' %}</label>
+                            {% render_field form.branch class="form-control select2" %}
+                            {% if form.branch.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.branch.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
 
                         <div class="form-group mb-3">
                             <label for="{{ form.notes.id_for_label }}" class="form-label">{% trans 'ملاحظات' %}</label>
@@ -152,7 +185,7 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        // Initialize Select2
+        // Initialize Select2 for all select inputs
         $('.select2').select2({
             theme: 'bootstrap4',
             language: 'ar',
@@ -162,14 +195,16 @@
         // Handle status change
         $('#{{ form.status.id_for_label }}').on('change', function() {
             var status = $(this).val();
+            var resultGroup = $('#result-group');
             var resultField = $('#{{ form.result.id_for_label }}');
             
             if (status === 'completed') {
+                resultGroup.show();
                 resultField.prop('required', true);
-                resultField.closest('.form-group').show();
             } else {
+                resultGroup.hide();
                 resultField.prop('required', false);
-                resultField.closest('.form-group').hide();
+                resultField.val('');
             }
         }).trigger('change');
         
@@ -236,6 +271,9 @@
         if ($('#customer-select').val()) {
             $('#customer-select').trigger('change');
         }
+
+        // Trigger status change on page load
+        $('#{{ form.status.id_for_label }}').trigger('change');
     });
 </script>
 {% endblock %}

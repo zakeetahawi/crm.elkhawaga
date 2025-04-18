@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from accounts.models import Branch
+from accounts.models import Branch, User
 from .models import (
     Inspection,
     InspectionEvaluation,
@@ -114,6 +114,8 @@ class InspectionForm(forms.ModelForm):
         fields = [
             'contract_number',
             'customer',
+            'inspector',
+            'branch',
             'request_date',
             'scheduled_date',
             'status',
@@ -126,14 +128,25 @@ class InspectionForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        # Make all fields required except for optional ones
+        
+        # Set inspector queryset to show only active users
+        self.fields['inspector'].queryset = User.objects.filter(is_active=True)
+        
+        # Set default branch if user is not superuser
+        if user and not user.is_superuser:
+            self.fields['branch'].initial = user.branch
+            self.fields['branch'].widget.attrs['readonly'] = True
+            self.fields['branch'].disabled = True
+        
+        # Make fields optional as needed
         self.fields['notes'].required = False
         self.fields['result'].required = False
-        self.fields['customer'].required = False  # For new customers
-        self.fields['contract_number'].required = False  # Make contract number optional for inspection service
-
+        self.fields['customer'].required = False
+        self.fields['contract_number'].required = False
+        self.fields['inspector'].required = True
+        
         # Add Bootstrap classes
         for field in self.fields:
             self.fields[field].widget.attrs.update({
@@ -143,6 +156,8 @@ class InspectionForm(forms.ModelForm):
         # Custom labels in Arabic
         self.fields['contract_number'].label = _('رقم العقد')
         self.fields['customer'].label = _('العميل')
+        self.fields['inspector'].label = _('المعاين')
+        self.fields['branch'].label = _('الفرع')
         self.fields['request_date'].label = _('تاريخ الطلب')
         self.fields['scheduled_date'].label = _('تاريخ التنفيذ')
         self.fields['status'].label = _('الحالة')
@@ -153,15 +168,19 @@ class InspectionForm(forms.ModelForm):
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
         result = cleaned_data.get('result')
+        scheduled_date = cleaned_data.get('scheduled_date')
+        request_date = cleaned_data.get('request_date')
 
         # Validation: If status is completed, result is required
         if status == 'completed' and not result:
             self.add_error('result', _('يجب تحديد النتيجة عند اكتمال المعاينة'))
 
         # Validation: scheduled_date should be after or equal to request_date
-        request_date = cleaned_data.get('request_date')
-        scheduled_date = cleaned_data.get('scheduled_date')
         if request_date and scheduled_date and scheduled_date < request_date:
             self.add_error('scheduled_date', _('تاريخ التنفيذ يجب أن يكون بعد أو يساوي تاريخ الطلب'))
+
+        # Validation: scheduled_date is required
+        if not scheduled_date:
+            self.add_error('scheduled_date', _('يجب تحديد تاريخ التنفيذ'))
 
         return cleaned_data

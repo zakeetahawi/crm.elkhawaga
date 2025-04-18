@@ -19,70 +19,70 @@
     <div class="row mb-4">
         <div class="col-md-3">
             <a href="{% url 'inspections:inspection_list' %}?status=new" style="text-decoration: none;">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">المعاينات الجديدة</h6>
-                            <h2 class="mb-0">{{ new_inspections_count }}</h2>
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">المعاينات الجديدة</h6>
+                                <h2 class="mb-0">{{ new_inspections_count|default_if_none:0 }}</h2>
+                            </div>
+                            <i class="fas fa-clipboard fa-2x opacity-50"></i>
                         </div>
-                        <i class="fas fa-clipboard fa-2x opacity-50"></i>
                     </div>
                 </div>
-            </div>
             </a>
         </div>
         <div class="col-md-3">
             <a href="{% url 'inspections:inspection_list' %}?status=completed" style="text-decoration: none;">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">المعاينات المكتملة</h6>
-                            <h2 class="mb-0">{{ completed_inspections_count }}</h2>
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">المعاينات المكتملة</h6>
+                                <h2 class="mb-0">{{ completed_inspections_count|default_if_none:0 }}</h2>
+                            </div>
+                            <i class="fas fa-check-circle fa-2x opacity-50"></i>
                         </div>
-                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
                     </div>
                 </div>
-            </div>
             </a>
         </div>
         <div class="col-md-3">
             <a href="{% url 'inspections:inspection_list' %}?status=in_progress" style="text-decoration: none;">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">قيد المعاينة</h6>
-                            <h2 class="mb-0">{{ in_progress_inspections_count }}</h2>
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">قيد المعاينة</h6>
+                                <h2 class="mb-0">{{ in_progress_inspections_count|default_if_none:0 }}</h2>
+                            </div>
+                            <i class="fas fa-clock fa-2x opacity-50"></i>
                         </div>
-                        <i class="fas fa-clock fa-2x opacity-50"></i>
                     </div>
                 </div>
-            </div>
             </a>
         </div>
         <div class="col-md-3">
             <a href="{% url 'inspections:inspection_list' %}?overdue=1" style="text-decoration: none;">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title">معاينات متأخرة</h6>
-                            <h2 class="mb-0">{{ overdue_inspections_count }}</h2>
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">معاينات متأخرة</h6>
+                                <h2 class="mb-0">{{ overdue_inspections_count|default_if_none:0 }}</h2>
+                            </div>
+                            <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
                         </div>
-                        <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
                     </div>
                 </div>
-            </div>
             </a>
         </div>
     </div>
 
-    <!-- Recent Inspections and Calendar -->
+    <!-- Recent Inspections and Statistics -->
     <div class="row">
         <!-- Recent Inspections -->
-        <div class="col-md-8">
+        <div class="col-md-8 mb-4 mb-md-0">
             <div class="card">
                 <div class="card-header bg-light">
                     <h5 class="card-title mb-0">
@@ -91,12 +91,12 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table table-hover">
                             <thead>
                                 <tr>
                                     <th>رقم المعاينة</th>
                                     <th>العميل</th>
-                                    <th>التاريخ</th>
+                                    <th>تاريخ المعاينة</th>
                                     <th>الحالة</th>
                                     <th>المعاين</th>
                                     <th>الإجراءات</th>
@@ -106,8 +106,8 @@
                                 {% for inspection in recent_inspections %}
                                 <tr>
                                     <td>#{{ inspection.id }}</td>
-                                    <td>{{ inspection.customer.name }}</td>
-                                    <td>{{ inspection.date|date:"Y-m-d" }}</td>
+                                    <td>{{ inspection.customer.name|default:"عميل جديد" }}</td>
+                                    <td>{{ inspection.scheduled_date|date:"Y-m-d" }}</td>
                                     <td>
                                         <span class="badge bg-{{ inspection.get_status_color }}">
                                             {{ inspection.get_status_display }}
@@ -131,7 +131,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Monthly Statistics -->
         <div class="col-md-4">
             <div class="card">
@@ -148,25 +147,37 @@
     </div>
 </div>
 
+{{ new_inspections_count|default_if_none:0|json_script:"newCount" }}
+{{ completed_inspections_count|default_if_none:0|json_script:"completedCount" }}
+{{ in_progress_inspections_count|default_if_none:0|json_script:"inProgressCount" }}
+{{ overdue_inspections_count|default_if_none:0|json_script:"overdueCount" }}
+{% endblock %}
+
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var ctx = document.getElementById('monthlyStats').getContext('2d');
+    const chartData = {
+        newCount: JSON.parse(document.getElementById('newCount').textContent),
+        completedCount: JSON.parse(document.getElementById('completedCount').textContent),
+        inProgressCount: JSON.parse(document.getElementById('inProgressCount').textContent),
+        overdueCount: JSON.parse(document.getElementById('overdueCount').textContent)
+    };
+
+    const ctx = document.getElementById('monthlyStats').getContext('2d');
     new Chart(ctx, {
         type: 'pie',
         data: {
             labels: ['جديدة', 'مكتملة', 'قيد المعاينة', 'متأخرة'],
             datasets: [{
                 data: [
-                    {{ new_inspections_count|add:0 }},
-                    {{ completed_inspections_count|add:0 }},
-                    {{ in_progress_inspections_count|add:0 }},
-                    {{ overdue_inspections_count|add:0 }}
+                    chartData.newCount,
+                    chartData.completedCount,
+                    chartData.inProgressCount,
+                    chartData.overdueCount
                 ],
                 backgroundColor: [
                     '#0d6efd',
-                    '#198754',
+                    '#198754', 
                     '#ffc107',
                     '#dc3545'
                 ]
@@ -174,11 +185,14 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 });
 </script>
-{% endblock %}
-
 {% endblock %}
