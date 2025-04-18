@@ -4,3 +4,5 @@ python-dotenv==1.0.0
 dj-database-url==2.0.0
 psycopg2-binary==2.9.6
 gunicorn==20.1.0
+zappa==0.56.0
+mangum==0.17.0
