@@ -2,6 +2,7 @@
   base = "./"
   command = "chmod +x build.sh && ./build.sh"
   publish = "staticfiles"
+  functions = "netlify/functions"
 
 [build.environment]
   PYTHON_VERSION = "3.9"
@@ -9,15 +10,21 @@
   PYTHONPATH = "."
   DEBUG = "0"
 
-[[plugins]]
-  package = "@netlify/plugin-python"
-  [plugins.inputs]
-    pythonVersion = "3.9"
+[functions]
+  external_node_modules = []
+  included_files = ["crm/**/*", "templates/**/*", "staticfiles/**/*"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/django/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/.netlify/functions/django"
   status = 200
+  force = true
 
 [[headers]]
   for = "/*"
