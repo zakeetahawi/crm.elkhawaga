@@ -1,16 +1,25 @@
 [build]
   base = "./"
-  command = "chmod +x build.sh && ./build.sh"
+  command = """
+    curl https://pyenv.run | bash
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+    pyenv install 3.7.13
+    pyenv global 3.7.13
+    chmod +x build.sh
+    ./build.sh
+  """
   publish = "staticfiles"
 
 [build.environment]
-  PYTHON_VERSION = "3.7"
   NODE_VERSION = "18.17.0"
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
   SECRET_KEY = "django-insecure-k9l7v5#ar90z@s3kj&z8_5y2p7l5x3=k9l7v5#ar90z@s3kj"
   NETLIFY_SITE_NAME = "crm-elkhawaga"
+  PATH = "$HOME/.pyenv/bin:$PATH"
 
 [context.production.environment]
   DEBUG = "0"
@@ -18,17 +27,15 @@
 
 [context.deploy-preview]
   command = """
-    python -m pip install --upgrade pip &&
-    pip install -r requirements.txt &&
-    python manage.py collectstatic --noinput &&
-    python manage.py migrate --noinput
-  """
-
-[context.branch-deploy]
-  command = """
-    python -m pip install --upgrade pip &&
-    pip install -r requirements.txt &&
-    python manage.py collectstatic --noinput &&
+    curl https://pyenv.run | bash
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+    pyenv install 3.7.13
+    pyenv global 3.7.13
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    python manage.py collectstatic --noinput
     python manage.py migrate --noinput
   """
 
