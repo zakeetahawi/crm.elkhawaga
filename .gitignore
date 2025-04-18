@@ -41,3 +41,6 @@ ENV/
 # Other
 .DS_Store
 *.swp
+
+# Local Netlify folder
+.netlify

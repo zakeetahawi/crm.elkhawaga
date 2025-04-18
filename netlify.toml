@@ -13,63 +13,8 @@
   DJANGO_SETTINGS_MODULE = "crm.settings"
   PYTHONPATH = "."
   DEBUG = "0"
-  SECRET_KEY = "${SECRET_KEY}"
-
-[build.processing]
-  skip_processing = true
-
-[build.processing.css]
-  bundle = false
-  minify = false
-
-[build.processing.js]
-  bundle = false
-  minify = false
-
-[build.processing.html]
-  pretty_urls = false
-
-[build.processing.images]
-  compress = false
 
 [[plugins]]
   package = "@netlify/plugin-python"
   [plugins.inputs]
     pythonVersion = "3.9"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/static/*"
-  to = "/static/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/media/*"
-  to = "/media/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
-      style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
-      img-src 'self' data: https:;
-      font-src 'self' https://cdn.jsdelivr.net;
-    """
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains"

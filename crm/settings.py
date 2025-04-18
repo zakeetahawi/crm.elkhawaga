@@ -1,17 +1,21 @@
 import os
 from pathlib import Path
-import secrets
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_urlsafe(50))
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', '1') == '1'
+DEBUG = os.environ.get('DEBUG', '0').lower() in ['true', 't', '1']
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.netlify.app',  # Allows all Netlify subdomains
+    os.environ.get('SITE_URL', ''),  # Custom domain if configured
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -31,12 +35,15 @@ INSTALLED_APPS = [
     'orders',
     'reports',
     'data_import_export',
+    'corsheaders',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -101,7 +108,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
@@ -145,11 +152,10 @@ if not DEBUG:
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost',
-    'https://localhost',
-    f'https://{os.environ.get("NETLIFY_SITE_NAME")}.netlify.app' if os.environ.get("NETLIFY_SITE_NAME") else None,
+    "https://*.netlify.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
-CORS_ALLOWED_ORIGINS = [origin for origin in CORS_ALLOWED_ORIGINS if origin is not None]
 
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
@@ -157,3 +163,15 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+
+# Required environment variables
+REQUIRED_ENV_VARS = [
+    'SECRET_KEY',
+    'DATABASE_URL',
+    'SITE_URL',
+]
+
+# Validate required environment variables
+for var in REQUIRED_ENV_VARS:
+    if var not in os.environ:
+        raise Exception(f'Required environment variable "{var}" is missing!')
